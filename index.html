@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giulia</title>
+<meta name="description" content="Portfólio de Giulia Aragão, AI Builder: uma ilha em voxels com nove cômodos sobre agentes de IA, MCP, Google Cloud e jogos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+/* Plano visual: ilha flutuante em voxels vista em isometria, céu que acompanha a hora local, painéis de pixel. */
+:root{
+  --ink:#1b1745;
+  --ink-2:#2c2670;
+  --paper:#f6f2ff;
+  --coral:#ff6f61;
+  --sun:#ffc857;
+  --teal:#22c3b0;
+  --lilac:#b9a2ff;
+  --font-pixel:"Pixelify Sans","Trebuchet MS",system-ui,sans-serif;
+  --font-text:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:#b9dcff;color:var(--ink);font-family:var(--font-text);overflow:hidden;color-scheme:light;-webkit-font-smoothing:antialiased}
+#sky{position:fixed;inset:0;background:linear-gradient(#b9dcff,#ffe0ea)}
+#stars{position:fixed;inset:0;width:100%;height:100%;opacity:0;pointer-events:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+
+/* botões de pixel */
+.btn{font:600 16px/1 var(--font-pixel);color:var(--ink);background:var(--paper);border:3px solid var(--ink);border-radius:0;padding:.7em 1em;box-shadow:4px 4px 0 var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.5em;min-height:44px}
+.btn:hover{background:var(--sun)}
+.btn:active{transform:translate(4px,4px);box-shadow:none}
+.btn.primary{background:var(--coral)}
+.btn.primary:hover{background:var(--sun)}
+.btn.teal{background:var(--teal)}
+.btn.teal:hover{background:var(--sun)}
+.btn.small{font-size:14px;padding:.55em .8em;min-height:40px;box-shadow:3px 3px 0 var(--ink)}
+.panel{background:var(--paper);color:var(--ink);border:3px solid var(--ink);box-shadow:6px 6px 0 rgba(11,10,38,.6)}
+.chip{background:rgba(27,23,69,.86);color:var(--paper);border:3px solid var(--ink);padding:8px 12px}
+kbd{font:600 13px/1 var(--font-pixel);display:inline-block;min-width:28px;text-align:center;padding:6px 8px;background:var(--paper);color:var(--ink);border:2px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
+
+/* terminal mcp */
+#term,#resume{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(11,10,38,.72)}
+#term .win{width:min(760px,100%);max-height:min(640px,100%);display:flex;flex-direction:column;background:#0f0c36;color:#d9d3ff;border:3px solid var(--lilac);box-shadow:8px 8px 0 rgba(0,0,0,.5)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;background:var(--ink-2);border-bottom:3px solid var(--lilac);font:600 16px/1 var(--font-pixel)}
+.bar .dot{display:inline-block;width:10px;height:10px;background:var(--teal);margin-right:8px;box-shadow:0 0 0 3px rgba(34,195,176,.3)}
+.tchips{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px 4px}
+.tchips button{font:500 14px/1 var(--font-pixel);color:var(--ink);background:var(--lilac);border:2px solid var(--ink);padding:9px 10px;cursor:pointer;min-height:40px}
+.tchips button:hover{background:var(--sun)}
+#termOut{flex:1;overflow:auto;padding:10px 14px;font:400 17px/1.5 var(--font-pixel);min-height:180px}
+#termOut p{margin:0 0 2px;white-space:pre-wrap;word-break:break-word}
+#termOut .cmd{color:var(--sun)}
+#termOut .ok{color:var(--teal)}
+#termOut .dim{color:#8e86d6}
+#termOut a{color:var(--sun)}
+#termForm{display:flex;gap:10px;align-items:center;padding:10px 14px 14px;border-top:2px solid rgba(185,162,255,.35)}
+#termForm label{color:var(--sun);font:600 18px/1 var(--font-pixel)}
+#termIn{flex:1;min-width:0;background:transparent;border:0;border-bottom:2px solid var(--lilac);color:#fff;font:500 18px/1.2 var(--font-pixel);padding:6px 2px;caret-color:var(--sun)}
+#termIn:focus{outline:none;border-bottom-color:var(--sun)}
+
+/* modo currículo */
+#resume{background:#ece6ff;align-items:flex-start;overflow:auto;padding:0;color:var(--ink);font-family:var(--font-text)}
+.cv-wrap{width:min(1020px,100%);margin:0 auto;padding:20px clamp(16px,4vw,40px) 60px}
+.cv-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.cv-top p{margin:0;font-size:14px;color:#4b447f}
+.cv-sheet{background:#fff;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--lilac);padding:clamp(20px,4vw,44px)}
+.cv-head h2{margin:0;font:700 clamp(36px,6vw,60px)/.95 var(--font-pixel)}
+.cv-links{display:flex;gap:6px 20px;flex-wrap:wrap;margin-top:14px;font-size:16px}
+.cv-links a{font-weight:700;text-decoration-thickness:2px;text-underline-offset:3px;color:#b8281c}
+.cv section{margin-top:30px}
+.cv h3{font:600 21px/1.1 var(--font-pixel);margin:0 0 14px;padding-bottom:8px;border-bottom:3px solid var(--ink)}
+.cv p,.cv li{font-size:15.5px;line-height:1.55;max-width:74ch}
+.cv ul{margin:6px 0 0;padding-left:1.2em}
+.cv li+li{margin-top:4px}
+.job{margin-bottom:22px;padding-left:14px;border-left:3px solid #d9d1f5}
+.job.ai{border-left-color:var(--teal)}
+.job-head{display:flex;justify-content:space-between;gap:4px 24px;flex-wrap:wrap}
+.job-head b{display:block;font-size:16.5px}
+.job-head i{display:block;font-size:14.5px;color:#4b447f}
+.job-head .r{text-align:right}
+.skills{margin:0;display:grid;gap:12px}
+.skills>div{padding-left:14px;border-left:3px solid #d9d1f5}
+.skills>div.ai{border-left-color:var(--teal)}
+.skills dt{font-weight:700;font-size:15px}
+.skills dd{margin:2px 0 0;font-size:15.5px;line-height:1.5}
+.cv-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:0 40px}
+.edu{margin-bottom:12px;font-size:15.5px;line-height:1.45}
+.edu span{color:#4b447f;font-size:14px;margin-left:6px}
+.edu i{display:block;color:#4b447f;font-size:14.5px}
+@media (max-width:760px){.cv-duo{grid-template-columns:1fr}.job-head .r{text-align:left}}
+
+
+
+/* abertura */
+#title{position:fixed;inset:0;display:flex;align-items:center;padding:clamp(20px,5vw,72px);background:linear-gradient(90deg,rgba(246,242,255,.9) 0%,rgba(246,242,255,.55) 42%,transparent 70%);z-index:30}
+.title-in{max-width:min(620px,100%);display:flex;flex-direction:column;gap:20px;align-items:flex-start}
+#title h1{margin:0;font:700 clamp(52px,10vw,124px)/.86 var(--font-pixel);color:var(--ink);letter-spacing:-.01em;text-shadow:4px 4px 0 var(--lilac),8px 8px 0 var(--coral)}
+#title .lead{margin:0;font-size:clamp(16px,1.7vw,20px);line-height:1.5;max-width:36ch;color:var(--ink)}
+.row{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center}
+.btn.teal{background:var(--teal)}
+.btn.teal:hover{background:var(--sun)}
+.opts{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:14px;align-items:center}
+.opt{display:inline-flex;gap:8px;align-items:center;cursor:pointer}
+.opt input{width:18px;height:18px;accent-color:var(--coral)}
+
+/* seletor de idioma */
+.langsel{font:600 14px/1 var(--font-pixel);color:var(--ink);background:var(--paper);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:.55em .6em;cursor:pointer;border-radius:0}
+.langsel:hover{background:var(--sun)}
+.tools .langsel{padding:.5em .4em}
+/* HUD */
+#hud{position:fixed;left:0;right:0;top:0;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-start;justify-content:space-between;padding:12px 14px;pointer-events:none;z-index:10}
+#hud>*{pointer-events:auto}
+.who{background:var(--paper);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:9px 13px}
+.who b{display:block;font:700 clamp(17px,2.2vw,22px)/1 var(--font-pixel)}
+.who small{display:block;margin-top:6px;font:500 13px/1 var(--font-pixel);color:var(--ink-2)}
+.meter{display:block;margin-top:7px;height:8px;border:2px solid var(--ink);background:#fff;width:100%;min-width:130px}
+.meter i{display:block;height:100%;width:0;background:var(--coral);transition:width .4s}
+.tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start}
+.timebtn{display:flex;gap:10px;align-items:center;text-align:left}
+.timebtn svg{flex:none}
+.timebtn span small{display:block;font:500 11px/1.2 var(--font-text);opacity:.75;margin-top:3px}
+#bar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:7px;z-index:10;padding:0 8px;max-width:100vw}
+#bar button{position:relative;width:58px;height:58px;padding:0;display:grid;place-items:center;background:var(--paper);border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink);cursor:pointer}
+#bar button:hover,#bar button.on{background:var(--sun);transform:translateY(-3px)}
+#bar button sup{position:absolute;left:3px;top:1px;font:600 11px/1 var(--font-pixel);color:var(--ink-2)}
+#bar button.seen::after{content:"";position:absolute;right:3px;top:3px;width:8px;height:8px;background:var(--coral);border:2px solid var(--ink)}
+#bar svg{width:33px;height:33px;shape-rendering:crispEdges}
+.tag{position:fixed;transform:translate(-50%,-100%);z-index:6;background:var(--paper);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);font:600 14px/1 var(--font-pixel);padding:6px 8px;cursor:pointer;display:flex;gap:7px;align-items:center;white-space:nowrap}
+.tag span{display:none}
+.tag:hover,.tag:focus-visible,.tag.on{background:var(--sun)}
+.tag:hover span,.tag:focus-visible span,.tag.on span{display:inline}
+.tag.seen b{color:var(--coral)}
+#hint{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:9;background:rgba(27,23,69,.9);color:var(--paper);border:3px solid var(--ink);padding:9px 14px;font:500 15px/1.35 var(--font-pixel);text-align:center;max-width:92vw}
+#toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:12;background:rgba(27,23,69,.92);color:var(--paper);border:3px solid var(--ink);padding:9px 14px;font:600 15px/1.3 var(--font-pixel);text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+#toast.show{opacity:1}
+
+/* painel do cômodo */
+#panel{position:fixed;right:18px;top:92px;bottom:92px;width:min(430px,calc(100vw - 36px));z-index:11;display:flex;flex-direction:column;background:var(--paper);border:3px solid var(--ink);box-shadow:6px 6px 0 rgba(27,23,69,.5);animation:slide .28s ease-out}
+@keyframes slide{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.ph{display:flex;align-items:center;gap:12px;padding:14px 16px 12px;border-bottom:3px solid var(--ink);background:var(--rc,#ffd35c)}
+.ph .no{font:700 18px/1 var(--font-pixel);background:var(--paper);border:3px solid var(--ink);padding:7px 9px}
+.ph h2{margin:0;font:700 clamp(22px,2.6vw,28px)/1 var(--font-pixel);flex:1}
+.ph button{background:var(--paper);border:3px solid var(--ink);padding:0;width:36px;height:36px;cursor:pointer;font:700 18px/1 var(--font-pixel)}
+.ph button:hover{background:var(--sun)}
+.pb{padding:16px 18px 8px;overflow:auto;flex:1;font-size:16px;line-height:1.55}
+.pb h3{font:600 17px/1.2 var(--font-pixel);margin:18px 0 8px}
+.pb h3:first-child{margin-top:0}
+.pb p{margin:0 0 10px;max-width:60ch}
+.pb ul{margin:0 0 10px;padding-left:1.15em}
+.pb li{margin-bottom:6px}
+.pb .meta{font-size:14px;color:var(--ink-2);margin:-4px 0 8px}
+.pb .acts{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;padding:0;list-style:none}
+.chips li{margin:0;font:500 13px/1 var(--font-pixel);background:var(--lilac);border:2px solid var(--ink);padding:6px 8px}
+.chips.ai li{background:var(--teal)}
+.pf{display:flex;justify-content:space-between;gap:10px;padding:12px 16px;border-top:3px solid var(--ink);background:#ece6ff}
+@media (max-width:760px){
+  #panel{left:10px;right:10px;top:auto;bottom:86px;width:auto;height:min(46vh,420px);animation:rise .28s ease-out}
+  @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+  #bar{gap:4px;bottom:10px}
+  #bar button{width:38px;height:44px}
+  #bar svg{width:24px;height:24px}
+  #bar button sup{font-size:9px}
+  .tools .btn{padding:.5em .65em;font-size:13px;min-height:40px}
+  .timebtn small{display:none}
+  .who{display:none}
+  #toast{bottom:80px}
+}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){#panel{animation:none}.meter i,#toast{transition:none}}
+</style>
+</head>
+<body data-mode="title">
+<div id="sky"></div>
+<canvas id="stars" aria-hidden="true"></canvas>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div id="tags"></div>
+
+<main id="title">
+  <div class="title-in">
+    <h1>giulia<br>aragão</h1>
+    <p class="lead" data-i18n="lead"></p>
+    <div class="row">
+      <button class="btn primary" id="btnPlay" type="button" data-i18n="play"></button>
+      <button class="btn teal" id="btnTermT" type="button" data-i18n="termT"></button>
+      <button class="btn" id="btnCvT" type="button" data-i18n="cv"></button>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="checkbox" id="optReduce"> <span data-i18n="reduce"></span></label>
+      <label class="opt"><input type="checkbox" id="optNight"> <span data-i18n="night"></span></label>
+      <select class="langsel" aria-label="idioma" data-i18n-aria="lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option><option value="it">Italiano</option></select>
+    </div>
+  </div>
+</main>
+
+<header id="hud" hidden>
+  <div class="who"><b>giulia aragão</b><small><span data-i18n="explored"></span> <span id="progN">0</span>/9</small><span class="meter"><i id="meter"></i></span></div>
+  <div class="tools">
+    <button class="btn small timebtn" id="btnTime" type="button" data-i18n-aria="timeAria" aria-label="mudar a hora do dia"><svg id="timeIcon" width="30" height="30" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"></svg><span><b id="timeName">dia</b><small id="timeHint">hora local</small></span></button>
+    <button class="btn small" id="btnTerm" type="button" data-i18n="term"></button>
+    <button class="btn small" id="btnCv" type="button" data-i18n="cv"></button>
+    <select class="langsel" aria-label="idioma" data-i18n-aria="lang"><option value="pt">PT</option><option value="en">EN</option><option value="es">ES</option><option value="it">IT</option></select>
+  </div>
+</header>
+
+<div id="hint" role="status" hidden></div>
+<div id="toast" role="status"></div>
+<aside id="panel" role="region" data-i18n-aria="panelAria" aria-label="detalhes do cômodo" hidden></aside>
+<nav id="bar" data-i18n-aria="barAria" aria-label="cômodos da ilha" hidden></nav>
+<div class="sr" id="sr" aria-live="polite"></div>
+
+<section id="term" role="dialog" aria-modal="true" aria-labelledby="termTitle" hidden>
+  <div class="win">
+    <div class="bar"><span id="termTitle"><i class="dot"></i>mcp://giulia</span><button class="btn small" id="termClose" type="button" data-i18n="termClose"></button></div>
+    <div class="tchips" id="tchips"></div>
+    <div id="termOut" role="log" aria-live="polite" tabindex="0"></div>
+    <form id="termForm" autocomplete="off">
+      <label for="termIn">$</label>
+      <input id="termIn" type="text" spellcheck="false" autocapitalize="off" data-i18n-ph="termPh" placeholder="">
+    </form>
+  </div>
+</section>
+
+
+<section id="resume" class="cv" role="dialog" aria-modal="true" aria-labelledby="cvName" hidden>
+  <div class="cv-wrap">
+    <div class="cv-top">
+      <button class="btn" id="cvClose" type="button" data-i18n="cvClose"></button>
+      <p data-i18n="cvNote"></p>
+    </div>
+    <article class="cv-sheet" id="cvSheet"></article>
+  </div>
+</section>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const RN = rng(20261115);
+let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const st = { mode: 'title', prev: 'title', t: 0, room: -1, hover: -1, visited: new Set(), tod: 'auto' };
+
+
+/* ---------- voxels ---------- */
+const FACES = [
+  { n: [1, 0, 0], v: [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]] }, { n: [-1, 0, 0], v: [[0, 0, 1], [0, 1, 1], [0, 1, 0], [0, 0, 0]] },
+  { n: [0, 1, 0], v: [[0, 1, 1], [1, 1, 1], [1, 1, 0], [0, 1, 0]] }, { n: [0, -1, 0], v: [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]] },
+  { n: [0, 0, 1], v: [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]] }, { n: [0, 0, -1], v: [[1, 0, 0], [0, 0, 0], [0, 1, 0], [1, 1, 0]] }
+];
+let THREE_C;
+class Vox {
+  constructor() { this.p = []; this.n = []; this.c = []; this.i = []; this.k = 0; }
+  box(x, y, z, w, h, d, col, j = .04) {
+    THREE_C = THREE_C || new THREE.Color(); THREE_C.set(col);
+    const jit = 1 + (RN() - .5) * 2 * j, r = THREE_C.r * jit, g = THREE_C.g * jit, b = THREE_C.b * jit;
+    for (const f of FACES) {
+      for (const q of f.v) { this.p.push(x + q[0] * w, y + q[1] * h, z + q[2] * d); this.n.push(f.n[0], f.n[1], f.n[2]); this.c.push(r, g, b); }
+      const k = this.k; this.i.push(k, k + 1, k + 2, k, k + 2, k + 3); this.k += 4;
+    }
+    return this;
+  }
+  mesh(mat, o = {}) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
+    geo.setIndex(new THREE.BufferAttribute(new Uint32Array(this.i), 1));
+    const m = new THREE.Mesh(geo, mat); m.castShadow = o.cast !== false; m.receiveShadow = o.recv !== false; return m;
+  }
+}
+/* fonte 3x5 para letreiros em voxel */
+const GL = { A: [2, 5, 7, 5, 5], B: [6, 5, 6, 5, 6], C: [3, 4, 4, 4, 3], D: [6, 5, 5, 5, 6], E: [7, 4, 6, 4, 7], F: [7, 4, 6, 4, 4], G: [3, 4, 5, 5, 3], H: [5, 5, 7, 5, 5], I: [7, 2, 2, 2, 7], J: [1, 1, 1, 5, 2], K: [5, 5, 6, 5, 5], L: [4, 4, 4, 4, 7], M: [5, 7, 7, 5, 5], N: [6, 5, 5, 5, 5], O: [2, 5, 5, 5, 2], P: [6, 5, 6, 4, 4], Q: [2, 5, 5, 6, 3], R: [6, 5, 6, 5, 5], S: [3, 4, 2, 1, 6], T: [7, 2, 2, 2, 2], U: [5, 5, 5, 5, 7], V: [5, 5, 5, 5, 2], W: [5, 5, 7, 7, 5], X: [5, 5, 2, 5, 5], Y: [5, 5, 2, 2, 2], Z: [7, 1, 2, 4, 7], 0: [7, 5, 5, 5, 7], 1: [2, 6, 2, 2, 7], 2: [6, 1, 2, 4, 7], 3: [6, 1, 2, 1, 6], 6: [3, 4, 6, 5, 2], ' ': [0, 0, 0, 0, 0] };
+function vtext(v, s, x, y, z, k, col, wall) {
+  s = s.toUpperCase();
+  for (let i = 0; i < s.length; i++) {
+    const g = GL[s[i]]; if (!g) continue;
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 3; c++) if (g[r] & (4 >> c)) {
+      const off = (i * 4 + c) * k;
+      if (wall === 'z') v.box(x + off, y + (4 - r) * k, z, k, k, k * .6, col, 0);
+      else v.box(z, y + (4 - r) * k, x - off - k, k * .6, k, k, col, 0);
+    }
+  }
+}
+
+/* ---------- cena ---------- */
+let renderer, scene, cam, sun, hemi, matV, matWin, matEmis, matLedA, matLedB, matBasic;
+const roomsG = [];
+const anims = [];
+const view = { tx: 0, ty: 0, tz: 0, zoom: 1, sx: 0, sy: 0, az: Math.PI / 4 };
+const goal = { tx: 0, ty: 0, tz: 0, zoom: 1, sx: 0, sy: 0 };
+const WT = .7, FY = .7, WH = 5.2;
+const PLOTS = { casa: [13, 13], forja: [-13, -13], voler: [13, -13], patuve: [-13, 13], trofeus: [-13, 0], sbgames: [0, -13], aula: [0, 13], formacao: [13, 0] };
+
+/* móveis */
+const BRICKS = ['#c4693f', '#b55c39', '#cc744a', '#ab5430'];
+function shell(v, th) {
+  v.box(0, 0, 0, 9, .6, 9, th.dark, .02);
+  for (let i = 0; i < 9; i++) for (let j = 0; j < 9; j++) v.box(i, .6, j, 1, .1, 1, ((i + j) & 1) ? '#e2b57c' : '#d8a86e', .02);
+  v.box(8.45, FY, 0, .55, .4, 9, th.main, .02); v.box(0, FY, 8.45, 8.45, .4, .55, th.main, .02);
+  v.box(0, FY, 0, 9, WH - FY, WT, '#8d4a35', 0); v.box(0, FY, 0, WT, WH - FY, 9, '#8d4a35', 0);
+  for (let r = 0; r < 9; r++) {
+    const y = FY + r * .5, off = (r & 1) * .5;
+    for (let c = -1; c < 9; c++) {
+      let x0 = c + off, x1 = x0 + 1; x0 = Math.max(0, x0); x1 = Math.min(9, x1); if (x1 - x0 < .1) continue;
+      const col = BRICKS[Math.floor(RN() * 4)];
+      v.box(x0 + .03, y + .03, WT, x1 - x0 - .06, .44, .06, col, .03);
+      if (x0 >= WT) v.box(WT, y + .03, x0 + .03, .06, .44, x1 - x0 - .06, BRICKS[Math.floor(RN() * 4)], .03);
+    }
+  }
+  v.box(WT, FY, WT, 8.3, .18, .1, '#f4e6d6', 0); v.box(WT, FY, WT, .1, .18, 8.3, '#f4e6d6', 0);
+  v.box(-.15, WH, -.15, 9.3, .35, 1.0, th.main, .02); v.box(-.15, WH + .35, -.15, 9.3, .15, 1.0, th.light, .02);
+  v.box(-.15, WH, .85, 1.0, .35, 8.3, th.main, .02); v.box(-.15, WH + .35, .85, 1.0, .15, 8.3, th.light, .02);
+}
+function win(a, wall, p, y, w = 1.5, h = 1.7) {
+  const { v, gv } = a, F = '#fff6ea';
+  if (wall === 'z') {
+    gv.box(p, y, WT + .08, w, h, .03, '#fff', 0);
+    v.box(p - .12, y - .12, WT + .06, w + .24, .12, .1, F, 0); v.box(p - .12, y + h, WT + .06, w + .24, .12, .1, F, 0);
+    v.box(p - .12, y, WT + .06, .12, h, .1, F, 0); v.box(p + w, y, WT + .06, .12, h, .1, F, 0);
+    v.box(p + w / 2 - .04, y, WT + .09, .08, h, .06, F, 0); v.box(p, y + h / 2 - .04, WT + .09, w, .08, .06, F, 0);
+  } else {
+    gv.box(WT + .08, y, p, .03, h, w, '#fff', 0);
+    v.box(WT + .06, y - .12, p - .12, .1, .12, w + .24, F, 0); v.box(WT + .06, y + h, p - .12, .1, .12, w + .24, F, 0);
+    v.box(WT + .06, y, p - .12, .1, h, .12, F, 0); v.box(WT + .06, y, p + w, .1, h, .12, F, 0);
+    v.box(WT + .09, y, p + w / 2 - .04, .06, h, .08, F, 0); v.box(WT + .09, y + h / 2 - .04, p, .06, .08, w, F, 0);
+  }
+}
+function desk(v, x, z, w, d, h = 1.1, c = '#c28a52') {
+  v.box(x, FY + h - .2, z, w, .2, d, c); [[0, 0], [w - .25, 0], [0, d - .25], [w - .25, d - .25]].forEach(q => v.box(x + q[0], FY, z + q[1], .25, h - .2, .25, '#8a5a36'));
+}
+function mon(a, x, y, z, w = 1, sc = '#4be3d0') {
+  a.v.box(x, y, z, w, .7, .12, '#2a2438', 0); a.sv.box(x + .07, y + .07, z + .12, w - .14, .56, .03, sc, 0);
+  a.v.box(x + w / 2 - .1, y - .2, z + .02, .2, .2, .1, '#2a2438', 0); a.v.box(x + w / 2 - .3, y - .25, z - .05, .6, .06, .4, '#2a2438', 0);
+  for (let i = 0; i < 3; i++) a.v.box(x + .15, y + .15 + i * .15, z + .16, (w - .3) * (.4 + .5 * RN()), .05, .01, '#14606a', 0);
+}
+function chair(v, x, z, c, wall = 'z') {
+  v.box(x, FY + .55, z, .8, .15, .8, c); v.box(x + .3, FY, z + .3, .2, .55, .2, '#4a4458');
+  if (wall === 'z') v.box(x, FY + .7, z + .65, .8, .8, .15, c); else v.box(x + .65, FY + .7, z, .15, .8, .8, c);
+}
+const BOOKS = ['#ff8f7a', '#ffd35c', '#8ec5ff', '#b9a2ff', '#7fe0b0', '#f6a9c4', '#fff4ea'];
+function shelf(a, x, z, len, wall, h = 3.2) {
+  const v = a.v;
+  if (wall === 'z') {
+    v.box(x, FY, WT, len, h, .75, '#a8693a'); for (let r = 0; r < 4; r++) { const y = FY + .15 + r * (h / 4); let cx = x + .1; while (cx < x + len - .3) { const w = .15 + RN() * .12; v.box(cx, y, WT + .75, w, h / 4 - .3, .12, BOOKS[Math.floor(RN() * 7)], .06); cx += w + .04; } v.box(x, y + h / 4 - .25, WT + .72, len, .08, .08, '#7a4a28', 0); }
+  } else {
+    v.box(WT, FY, z, .75, h, len, '#a8693a'); for (let r = 0; r < 4; r++) { const y = FY + .15 + r * (h / 4); let cz = z + .1; while (cz < z + len - .3) { const w = .15 + RN() * .12; v.box(WT + .75, y, cz, .12, h / 4 - .3, w, BOOKS[Math.floor(RN() * 7)], .06); cz += w + .04; } v.box(WT + .72, y + h / 4 - .25, z, .08, .08, len, '#7a4a28', 0); }
+  }
+}
+function plant(v, x, z, s = 1) {
+  v.box(x, FY, z, .6 * s, .5 * s, .6 * s, '#d8826a'); v.box(x + .25 * s, FY + .5 * s, z + .25 * s, .1 * s, .5 * s, .1 * s, '#4a8a52');
+  v.box(x - .1 * s, FY + .9 * s, z - .1 * s, .8 * s, .5 * s, .8 * s, '#5fc27a'); v.box(x + .05 * s, FY + 1.3 * s, z + .05 * s, .5 * s, .4 * s, .5 * s, '#79d68f');
+}
+function rug(v, x, z, w, d, c1, c2) { v.box(x, FY, z, w, .06, d, c1, .01); v.box(x + .3, FY + .06, z + .3, w - .6, .03, d - .6, c2, .01); }
+function sofa(v, x, z, len, c, wall = 'x') {
+  if (wall === 'x') { v.box(x, FY, z, 1.3, .6, len, c); v.box(x, FY + .6, z, .35, .95, len, c); v.box(x, FY + .6, z, 1.3, .4, .3, c); v.box(x, FY + .6, z + len - .3, 1.3, .4, .3, c); v.box(x + .4, FY + .6, z + .3, .8, .22, len - .6, '#fff2f6', .02); }
+  else { v.box(x, FY, z, len, .6, 1.3, c); v.box(x, FY + .6, z, len, .95, .35, c); v.box(x, FY + .6, z, .3, .4, 1.3, c); v.box(x + len - .3, FY + .6, z, .3, .4, 1.3, c); v.box(x + .3, FY + .6, z + .4, len - .6, .22, .8, '#fff2f6', .02); }
+}
+function picture(v, wall, p, y, w, h, c) {
+  if (wall === 'z') { v.box(p, y, WT, w, h, .14, '#fff6ea', 0); v.box(p + .12, y + .12, WT + .14, w - .24, h - .24, .03, c, 0); }
+  else { v.box(WT, y, p, .14, h, w, '#fff6ea', 0); v.box(WT + .14, y + .12, p + .12, .03, h - .24, w - .24, c, 0); }
+}
+function trophy(v, x, y, z, s = 1, c = '#ffc857') {
+  v.box(x - .35 * s, y, z - .35 * s, .7 * s, .2 * s, .7 * s, '#7a63d9'); v.box(x - .1 * s, y + .2 * s, z - .1 * s, .2 * s, .35 * s, .2 * s, c);
+  v.box(x - .35 * s, y + .55 * s, z - .35 * s, .7 * s, .55 * s, .7 * s, c); v.box(x - .5 * s, y + .7 * s, z - .1 * s, .15 * s, .3 * s, .2 * s, '#d9a21e'); v.box(x + .35 * s, y + .7 * s, z - .1 * s, .15 * s, .3 * s, .2 * s, '#d9a21e');
+  v.box(x - .22 * s, y + .65 * s, z + .35 * s, .1 * s, .35 * s, .03, '#fff3b0', 0);
+}
+function rack(a, x, z) {
+  a.v.box(x, FY, z, 1.1, 3.2, 1, '#2f2a46'); a.v.box(x + .05, FY + .05, z + 1, 1, 3.1, .04, '#3d3760', 0);
+  for (let r = 0; r < 7; r++) { a.v.box(x + .1, FY + .25 + r * .42, z + 1.02, .9, .3, .03, '#4a4470', 0); (RN() > .5 ? a.lA : a.lB).box(x + .18, FY + .35 + r * .42, z + 1.06, .12, .1, .02, r % 2 ? '#5ff5e0' : '#ff8f7a', 0); a.v.box(x + .5, FY + .38 + r * .42, z + 1.06, .4, .04, .02, '#8a84b8', 0); }
+}
+function flagpole(v, x, z, h, col) { v.box(x, FY, z, .12, h, .12, '#6a4a3a'); v.box(x + .12, FY + h - 1, z + .03, 1.1, .7, .05, col, 0); }
+
+const TH = {
+  casa: { main: '#f6a9c4', dark: '#d9729a', light: '#ffd0e0' }, forja: { main: '#59d3c0', dark: '#2d8f87', light: '#a4f0e2' }, voler: { main: '#8ec5ff', dark: '#4f8fd9', light: '#cfe6ff' },
+  patuve: { main: '#ff9a8a', dark: '#d9604f', light: '#ffc9bf' }, trofeus: { main: '#ffd35c', dark: '#d1a21e', light: '#ffe9a6' }, sbgames: { main: '#b9a2ff', dark: '#7a63d9', light: '#dccfff' },
+  aula: { main: '#8fdca0', dark: '#4aa86a', light: '#c4f0cf' }, formacao: { main: '#ffe08a', dark: '#d8b64a', light: '#fff0bd' }
+};
+const BUILD = {
+  casa(a) {
+    const { v, sv } = a; win(a, 'z', 1.3, 2.6); win(a, 'z', 6.4, 2.6); win(a, 'x', 3.2, 2.6);
+    shelf(a, 3.3, 0, 2.4, 'z'); vtext(v, 'OI', 3.9, 4.3, WT + .06, .24, '#fff4f8', 'z');
+    sofa(v, WT, 5.2, 3, '#ff9fc0', 'x'); rug(v, 3, 3.2, 3.6, 3.4, '#ffd9e6', '#ffb7d0'); plant(v, 7.6, 1.2); plant(v, 1.2, 1.4, .8);
+    picture(v, 'z', 6.2, 2.9, 1.6, 1.2, '#8ec5ff'); picture(v, 'x', 1.6, 3.6, 1.2, 1.2, '#ffd35c');
+    desk(v, 6.3, 1.0, 2.2, 1.2); mon(a, 6.8, FY + 1.1, 1.1, 1.0, '#9fe8ff'); chair(v, 7.0, 2.3, '#ff9fc0');
+    v.box(4.2, FY, 7.6, 1.8, .06, .8, '#fff', .01); v.box(4.4, FY + .06, 7.7, 1.4, .03, .6, '#ffb7d0', 0);
+  },
+  forja(a) {
+    const { v, sv } = a; win(a, 'z', 6.6, 3.0, 1.4, 1.4);
+    rack(a, 1.0, WT); rack(a, 2.3, WT); rack(a, 3.6, WT); vtext(v, 'MCP', 1.1, 4.2, WT + .05, .3, '#ff8f7a', 'z');
+    for (const z0 of [2.2, 5.0]) { sv.box(WT + .08, 2.4, z0, .03, 2.0, 2.4, '#0c2a45', 0); a.screens.push([WT + .1, 2.4, z0, 2.0, 2.4]); }
+    desk(v, 5.4, 1.1, 2.8, 1.2, 1.1, '#3d3760'); mon(a, 5.6, FY + 1.1, 1.3, 1.1, '#5ff5e0'); mon(a, 6.9, FY + 1.1, 1.3, 1.1, '#ffc857'); chair(v, 6.4, 2.5, '#59d3c0');
+    for (const q of [[1.6, 4.2], [2.2, 7.4], [6.8, 5.6], [5.4, 7.6]]) a.sv.box(q[0], FY + .02, q[1], 2.4 * .5, .03, .12, '#5ff5e0', 0);
+    sv.box(2.0, FY + .02, 6.6, .12, .03, 1.8, '#5ff5e0', 0); sv.box(2.0, FY + .02, 6.6, 3.4, .03, .12, '#5ff5e0', 0); sv.box(5.4, FY + .02, 5.6, .12, .03, 2.1, '#5ff5e0', 0);
+    plant(v, 8.0, 7.2, .9);
+    a.bot = true;
+  },
+  voler(a) {
+    const { v } = a; win(a, 'z', 1.3, 2.8, 1.5, 1.5); win(a, 'x', 6.4, 2.6);
+    for (const c of [[5.2, 3.6, 1.8, .7], [6.0, 3.9, 1.8, .9], [7.0, 3.6, 1.5, .7]]) v.box(c[0], c[1], WT + .05, c[2], c[3], .2, '#fff', 0);
+    vtext(v, 'VOLER', 4.6, 2.6, WT + .05, .22, '#4f8fd9', 'z');
+    v.box(3.0, 3.0, WT, 1.6, 1.6, .12, '#fff', 0);
+    v.box(.9, 2.6, WT, .01, .01, .01, '#fff', 0);
+    desk(v, WT, 2.0, 1.2, 2.4); desk(v, WT, 5.6, 1.2, 2.4); a.v.box(WT + .2, FY + 1.1, 2.6, .7, .08, .7, '#3d3760'); a.sv.box(WT + .22, FY + 1.18, 2.7, .66, .02, .5, '#9fe8ff'); a.v.box(WT + .2, FY + 1.1, 6.2, .7, .08, .7, '#3d3760'); a.sv.box(WT + .22, FY + 1.18, 6.3, .66, .02, .5, '#bfe3ff');
+    chair(v, 2.3, 2.6, '#8ec5ff', 'x'); chair(v, 2.3, 6.2, '#8ec5ff', 'x');
+    v.box(5.2, FY + 1.6, WT, 3.2, 1.8, .1, '#fff', 0); v.box(5.5, FY + 2.8, WT + .1, .7, .5, .04, '#8ec5ff', 0); v.box(6.7, FY + 2.8, WT + .1, .7, .5, .04, '#ffc857', 0); v.box(6.1, FY + 2.0, WT + .1, .7, .5, .04, '#ff8f7a', 0); v.box(6.2, FY + 2.55, WT + .1, .12, .3, .03, '#1b1745', 0);
+    rug(v, 3, 3.5, 3.4, 3.2, '#e8f2ff', '#cfe6ff'); plant(v, 8.0, 7.4, .9);
+  },
+  patuve(a) {
+    const { v } = a; win(a, 'x', 2.2, 2.7, 1.4, 1.5);
+    vtext(v, 'PATUVE', 1.2, 4.2, WT + .05, .26, '#fff4f0', 'z');
+    for (let c = 0; c < 3; c++) { v.box(1.3 + c * 1.6, 1.6, WT, 1.4, 2.4, .08, '#fff6ea', 0); for (let k = 0; k < 3; k++) if ((c + k) % 3 !== 2) v.box(1.45 + c * 1.6 + (k & 1) * .1, 1.9 + k * .7 + FY, WT + .08, .5, .45, .03, ['#ffd35c', '#8ec5ff', '#7fe0b0'][(c + k) % 3], 0); }
+    desk(v, 6.2, 1.1, 2.4, 1.2); mon(a, 6.4, FY + 1.1, 1.4, 1.1, '#ffd0c4'); a.sv.box(6.8, FY + 1.5, 1.52, .25, .3, .02, '#1b1745', 0); chair(v, 6.8, 2.5, '#ff9a8a');
+    v.box(WT, FY, 5.4, 1.2, 1.2, 1.6, '#2f2a46'); a.sv.box(WT + .04, FY + .9, 5.5, .02, .2, .6, '#5ff5e0', 0);
+    v.box(WT, FY + 1.2, 5.0, .9, 2.0, 2.4, '#2f2a46', 0); a.sv.box(WT + .92, FY + 1.5, 5.2, .03, 1.4, 2.0, '#7fdcff', 0);
+    v.box(3.0, FY, 4.4, 1.6, .7, 1.6, '#8ec5ff'); v.box(3.0, FY + .7, 4.4, 1.6, .5, .5, '#8ec5ff'); rug(v, 3.8, 5.8, 3, 2.2, '#ffe3dd', '#ffc9bf'); plant(v, 8.0, 7.2, .9);
+  },
+  trofeus(a) {
+    const { v } = a; win(a, 'x', 6.4, 2.8, 1.4, 1.5);
+    v.box(.9, FY, WT, 6.4, .7, 1.0, '#a8693a'); v.box(2.2, FY + .7, WT, 3.8, .7, .8, '#a8693a'); v.box(3.2, FY + 1.4, WT, 1.8, .7, .6, '#a8693a');
+    trophy(v, 1.6, FY + .7, 1.4, .9); trophy(v, 6.5, FY + .7, 1.3, .9, '#e0e0ee'); trophy(v, 2.9, FY + 1.4, 1.2, .85); trophy(v, 5.4, FY + 1.4, 1.2, .85, '#e8a070'); trophy(v, 4.1, FY + 2.1, 1.0, 1.1);
+    vtext(v, '1', 4.0, 4.0, WT + .05, .45, '#fff3b0', 'z');
+    for (let i = 0; i < 6; i++) v.box(4.0, FY, 3.0 + i * .9, 1.3, .06, .9, i % 2 ? '#e0556b' : '#c8405a', 0);
+    flagpole(v, 7.6, 6.2, 3.4, '#22c3b0'); vtext(v, 'GGJ', 7.74, FY + 2.8, 6.2, .1, '#fff', 'z'); flagpole(v, 1.2, 6.8, 3.2, '#ff8f7a');
+    vtext(v, 'EDUCAJAM', 1.0, 3.2, WT + .05, .16, '#7a4a28', 'z');
+  },
+  sbgames(a) {
+    const { v, sv } = a; win(a, 'x', 1.6, 3.0, 1.4, 1.4);
+    sv.box(2.2, 2.4, WT + .08, 4.8, 2.3, .03, '#f4f8ff', 0); vtext(v, 'SBGAMES', 2.8, 3.8, WT + .14, .22, '#7a63d9', 'z'); vtext(v, '26', 5.6, 2.8, WT + .14, .2, '#ff8f7a', 'z');
+    v.box(1.0, FY, WT, 7, .5, 2.4, '#8a6fe0'); v.box(1.0, FY + .5, WT, 7, .05, 2.4, '#b9a2ff', 0); v.box(7.8, FY + .5, 3.6, .8, 1.1, .6, '#a8693a');
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) { const x = 1.4 + c * 1.9, z = 4.6 + r * 1.9; v.box(x, FY, z, 1.2, .5, 1.0, '#ff9fc0'); v.box(x, FY + .5, z + .8, 1.2, .8, .2, '#ff9fc0'); }
+    a.scrolls = true;
+  },
+  aula(a) {
+    const { v } = a; win(a, 'x', 6.4, 2.8, 1.4, 1.5);
+    v.box(1.3, 1.9, WT, 6.4, 3.0, .12, '#a8693a', 0); v.box(1.5, 2.1, WT + .12, 6.0, 2.6, .03, '#2f6a52', 0); vtext(v, 'HELLO', 2.2, 3.4, WT + .16, .3, '#f4f8ff', 'z');
+    v.box(1.6, 2.15, WT + .16, 2.0, .05, .02, '#cfe9df', 0); v.box(5.6, 2.15, WT + .16, 1.2, .05, .02, '#ffd35c', 0);
+    desk(v, 3.4, 1.5, 2.4, 1.0, 1.1, '#b9794a'); trophy(v, 4.0, FY + 1.1, 2.0, .35, '#ff6f61');
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) { const x = 1.6 + c * 2.4, z = 4.2 + r * 2.2; desk(v, x, z, 1.4, .9, .95, '#d8a86e'); chair(v, x + .3, z + 1.0, '#8fdca0'); }
+    plant(v, 8.0, 1.4, .9);
+  },
+  formacao(a) {
+    const { v } = a; win(a, 'x', 3.6, 2.9, 1.4, 1.5);
+    shelf(a, 1.2, 0, 3.0, 'z'); shelf(a, 6.0, 0, 2.4, 'z', 3.0);
+    for (const q of [['#4a8af4', 0], ['#ea4335', 1], ['#fbbc05', 2], ['#34a853', 3]]) v.box(4.5 + q[1] * .55, 4.2, WT + .05, .45, .45, .08, q[0], 0);
+    vtext(v, 'IA', 4.6, 3.1, WT + .05, .26, '#7a4a28', 'z');
+    desk(v, 3.4, 5.4, 2.6, 1.2); v.box(4.4, FY + 1.1, 5.7, .9, .12, .9, '#1b1745', 0); v.box(4.7, FY + 1.22, 6.0, .3, .3, .02, '#1b1745', 0); v.box(5.3, FY + 1.1, 6.0, .06, .3, .06, '#ffc857', 0); v.box(4.7, FY + 1.34, 5.7, .9, .08, .9, '#1b1745', 0);
+    chair(v, 4.0, 6.7, '#ffd35c', 'z');
+    v.box(7.0, FY, 5.6, .9, .1, .9, '#7a63d9'); v.box(7.3, FY + .1, 5.9, .3, .6, .3, '#7a63d9'); v.box(6.8, FY + .7, 5.4, 1.3, 1.3, 1.3, '#8ec5ff'); v.box(6.9, FY + .9, 5.4, 1.1, .3, 1.32, '#7fe0b0', 0);
+    sofa(v, WT, 2.4, 2.6, '#ffb86b', 'x'); rug(v, 2.4, 2.2, 3, 2.6, '#fff0bd', '#ffe08a');
+  }
+};
+
+function makeRoom(key) {
+  const a = { v: new Vox(), gv: new Vox(), sv: new Vox(), lA: new Vox(), lB: new Vox(), screens: [], bot: false, scrolls: false };
+  shell(a.v, TH[key]); BUILD[key](a);
+  const g = new THREE.Group();
+  g.add(a.v.mesh(matV)); if (a.gv.k) g.add(a.gv.mesh(matWin, { cast: false })); if (a.sv.k) g.add(a.sv.mesh(matEmis, { cast: false }));
+  if (a.lA.k) g.add(a.lA.mesh(matLedA, { cast: false })); if (a.lB.k) g.add(a.lB.mesh(matLedB, { cast: false }));
+  a.screens.forEach(s => { const m = new THREE.Mesh(new THREE.PlaneGeometry(s[4] - .2, s[3] - .2), new THREE.MeshBasicMaterial({ map: termTex })); m.rotation.y = Math.PI / 2; m.position.set(s[0], s[1] + s[3] / 2, s[2] + s[4] / 2); g.add(m); });
+  return { g, a };
+}
+
+/* terminal falso nas telas */
+let termTex, termCtx;
+function makeTermTex() {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 96; termCtx = c.getContext('2d');
+  termTex = new THREE.CanvasTexture(c); termTex.magFilter = THREE.NearestFilter; termTex.minFilter = THREE.NearestFilter;
+}
+const TLINES = ['> conectar agente', 'mcp: ok', 'tools: 6', '> get_ai()', 'llm <-> apis', 'dados: ok', '> deploy gcp', 'iam: seguro', 'custo: menor', '> pronto'];
+function drawTerm(t) {
+  const g = termCtx; g.fillStyle = '#0c2a45'; g.fillRect(0, 0, 128, 96);
+  g.font = '10px monospace'; const off = Math.max(0, Math.floor(t * 1.2)) % TLINES.length;
+  for (let i = 0; i < 8; i++) { const s = TLINES[(i + off) % TLINES.length]; g.fillStyle = s[0] === '>' ? '#ffc857' : '#5ff5e0'; g.fillText(s, 6, 14 + i * 11); }
+  if (Math.floor(t * 2) % 2) { g.fillStyle = '#fff'; g.fillRect(6, 90, 6, 3); }
+  termTex.needsUpdate = true;
+}
+
+/* personagem voxel */
+let giulia;
+function part(fn, px, py, pz) { const v = new Vox(); fn(v); const m = v.mesh(matV); const g = new THREE.Group(); g.position.set(px, py, pz); g.add(m); return g; }
+function buildGiulia() {
+  const SK = '#e2ab84', HR = '#17141f', SH = '#2b2838', PN = '#d6d8e4', PS = '#b4b8cc', G = new THREE.Group(), P = {};
+  const leg = side => part(v => { v.box(-.22, -.95, -.22, .44, .95, .44, PN, .02); v.box(-.27, -.95, -.27, .54, .5, .54, PN, .02); v.box(-.05, -.9, .22, .1, .8, .02, PS, 0); v.box(-.28, -1.12, -.22, .56, .17, .74, '#f6f2ff', .02); }, side * .3, 1.05, 0);
+  P.l = leg(-1); P.r = leg(1);
+  const torso = part(v => { v.box(-.55, 0, -.3, 1.1, 1.0, .6, SH, .02); v.box(.12, .55, .3, .28, .2, .04, '#2f7de1', 0); v.box(-.08, .45, .3, .09, .5, .04, '#2e9b5e', 0); v.box(-.26, .1, .3, .36, .42, .04, '#fff', 0); v.box(-.2, .18, .34, .24, .05, .02, '#c7cce0', 0); }, 0, 1.05, 0);
+  const arm = side => part(v => { v.box(-.15, -.4, -.17, .3, .42, .34, SH, .02); v.box(-.12, -.88, -.14, .24, .5, .28, SK, .02); v.box(-.14, -.7, -.16, .28, .06, .32, '#e0b04a', 0); v.box(-.12, -1.0, -.14, .24, .14, .28, SK, .02); }, side * .72, 1.98, 0);
+  P.al = arm(-1); P.ar = arm(1);
+  const head = part(v => {
+    v.box(-.4, 0, -.34, .8, .78, .68, SK, .02); v.box(-.12, -.18, -.1, .24, .2, .2, SK, 0);
+    v.box(-.47, .62, -.42, .94, .24, .86, HR, .02); v.box(-.47, -.95, -.46, .94, 1.7, .26, HR, .02);
+    v.box(-.5, -.7, -.3, .16, 1.4, .52, HR, .02); v.box(.34, -.7, -.3, .16, 1.4, .52, HR, .02);
+    v.box(-.4, .58, .24, .34, .2, .12, HR, 0); v.box(.06, .58, .24, .34, .2, .12, HR, 0);
+    for (const sx of [-.33, .07]) { v.box(sx - .03, .3, .34, .32, .3, .04, '#1b1745', 0); v.box(sx + .02, .34, .37, .22, .22, .02, '#dff3ff', 0); v.box(sx + .09, .38, .385, .08, .12, .02, HR, 0); }
+    v.box(-.05, .42, .34, .1, .06, .04, '#1b1745', 0); v.box(-.1, .08, .34, .2, .06, .02, '#c0564e', 0);
+  }, 0, 2.05, 0);
+  G.add(P.l, P.r, torso, P.al, P.ar, head); G.scale.setScalar(1.0); G.userData = { P, head };
+  return G;
+}
+
+/* mundo */
+function buildWorld() {
+  // ilha
+  const w = new Vox(), inIs = (ix, iz, k) => { const cx = ix + .5, cz = iz + .5; return Math.abs(cx) + Math.abs(cz) < 34 - k * 3.2 && Math.max(Math.abs(cx), Math.abs(cz)) < 20 - k * 1.2; };
+  const G = ['#a6e8a8', '#9be19e', '#b1edb2', '#94d997'], PATH = ['#f1e8f4', '#e6dcec'];
+  for (let ix = -20; ix < 20; ix++) for (let iz = -20; iz < 20; iz++) {
+    if (!inIs(ix, iz, 0)) continue;
+    const cx = ix + .5, cz = iz + .5, path = (Math.abs(cx) < 1.2 && Math.abs(cz) < 18) || (Math.abs(cz) < 1.2 && Math.abs(cx) < 18) || Math.hypot(cx, cz) < 4.6;
+    w.box(ix, -.6, iz, 1, .6, 1, path ? PATH[(ix + iz) & 1 ? 0 : 1] : G[Math.floor(RN() * 4)], .03);
+  }
+  const dirt = ['#a97a5a', '#9d6f56', '#8f6552', '#80585a', '#70505f', '#634864'];
+  for (let k = 1; k <= 6; k++) for (let ix = -20; ix < 20; ix++) for (let iz = -20; iz < 20; iz++) if (inIs(ix, iz, k)) w.box(ix, -.6 - k * .9, iz, 1, .9, 1, dirt[k - 1], .05);
+  // flores e lanternas
+  const FL = ['#ff8fb0', '#ffd35c', '#ffffff', '#b9a2ff'];
+  for (let n = 0; n < 150; n++) { const ix = Math.floor(RN() * 40) - 20, iz = Math.floor(RN() * 40) - 20; if (!inIs(ix, iz, 0)) continue; const cx = ix + .5, cz = iz + .5; if (Math.abs(cx) < 1.4 || Math.abs(cz) < 1.4 || Object.values(PLOTS).some(p => Math.abs(cx - p[0]) < 5.2 && Math.abs(cz - p[1]) < 5.2) || Math.hypot(cx, cz) < 5) continue; w.box(ix + .4, 0, iz + .4, .1, .3, .1, '#4a8a52', 0); w.box(ix + .3, .3, iz + .3, .3, .25, .3, FL[Math.floor(RN() * 4)], .02); }
+  const lamps = [[5.5, 0], [-5.5, 0], [0, 5.5], [0, -5.5]];
+  const lampV = new Vox();
+  lamps.forEach(q => { w.box(q[0] - .1, 0, q[1] - .1, .2, 2.0, .2, '#4a4458', 0); lampV.box(q[0] - .3, 2.0, q[1] - .3, .6, .6, .6, '#fff2c0', 0); });
+  // cerca da frente
+  for (let i = -19; i < 20; i += 2) { for (const side of [0, 1]) { const x = side ? 19.6 : i, z = side ? i : 19.6; if (!inIs(Math.floor(side ? 19 : i), Math.floor(side ? i : 19), 0)) continue; w.box(x - .1, 0, z - .1, .2, .9, .2, '#a8693a', 0); if (i < 18) { if (side) w.box(x - .06, .5, z, .12, .12, 2, '#c28a52', 0); else w.box(x, .5, z - .06, 2, .12, .12, '#c28a52', 0); } } }
+  scene.add(w.mesh(matV));
+  const lampM = lampV.mesh(matEmis, { cast: false }); scene.add(lampM);
+  // cajueiro
+  const t = new Vox();
+  let ox = 0; for (let y = 0; y < 5; y++) { ox += (y % 2 ? .2 : -.15); t.box(ox - .5, y * .8, -.5, 1, .8, 1, '#8a5a3c', .05); }
+  t.box(ox - .35, 4.0, -.35, .7, .6, .7, '#8a5a3c');
+  const leaf = ['#4fb86a', '#5fc27a', '#3fa35c', '#6dd08a'], tree = new THREE.Group();
+  for (let n = 0; n < 60; n++) { const a = RN() * 6.28, r = Math.sqrt(RN()) * 3.4, y = 4.4 + RN() * 2.6 - r * .15; const s = 1 + RN() * 1.1; t.box(ox + Math.cos(a) * r - s / 2, y, Math.sin(a) * r - s / 2, s, s * .8, s, leaf[Math.floor(RN() * 4)], .06); }
+  const tm = t.mesh(matV); tree.add(tm);
+  const fruit = new Vox();
+  for (let n = 0; n < 14; n++) { const a = RN() * 6.28, r = 1.2 + RN() * 2.4, y = 4.2 + RN() * 1.2, fx = ox + Math.cos(a) * r, fz = Math.sin(a) * r; fruit.box(fx - .22, y, fz - .22, .44, .5, .44, RN() > .5 ? '#ff6a3d' : '#ffb13d', .04); fruit.box(fx - .1, y - .2, fz - .1, .2, .2, .2, '#6b6b78', 0); }
+  tree.add(fruit.mesh(matV));
+  scene.add(tree); tree.userData.ox = ox;
+  // bancos
+  const b = new Vox(); for (const q of [[3.2, 3.2], [-3.2, -3.2]]) { b.box(q[0] - .8, .0, q[1] - .3, 1.6, .5, .6, '#c28a52'); b.box(q[0] - .8, .0, q[1] - .3, .2, .5, .6, '#8a5a36'); b.box(q[0] + .6, .0, q[1] - .3, .2, .5, .6, '#8a5a36'); b.box(q[0] - .8, .5, q[1] - .3, 1.6, .6, .15, '#c28a52'); }
+  scene.add(b.mesh(matV));
+}
+let gate;
+function buildGate() {
+  const v = new Vox(), s = new Vox();
+  v.box(0, 0, 0, .8, 5, .8, '#6c63d9'); v.box(3.2, 0, 0, .8, 5, .8, '#6c63d9'); v.box(-.3, 5, -.2, 4.6, .8, 1.2, '#4a42b8'); v.box(-.5, 5.8, -.4, 5, .3, 1.6, '#9a86ef');
+  vtext(v, 'FASE 2', .55, 5.1, 1.0, .12, '#ffc857', 'z');
+  for (let i = 0; i < 7; i++) s.box(.8, .2 + i * .68, .3, 2.4, .62, .2, i % 2 ? '#5ff5e0' : '#b9a2ff', 0);
+  const g = new THREE.Group(); g.add(v.mesh(matV)); const sm = s.mesh(matEmis, { cast: false }); g.add(sm); g.position.set(3.0, 0, 3.2); g.rotation.y = 0; g.userData.sm = sm;
+  scene.add(g); return g;
+}
+const CLOUDS = [];
+function buildClouds() {
+  for (let n = 0; n < 9; n++) {
+    const v = new Vox(), parts = 4 + Math.floor(RN() * 4);
+    for (let i = 0; i < parts; i++) { const w = 2 + RN() * 3, h = 1 + RN() * 1.2, d = 2 + RN() * 2; v.box(i * 2.1 - parts, RN() * .8, RN() * 1.2, w, h, d, '#ffffff', .02); }
+    const m = v.mesh(matV, { cast: false, recv: false }); m.position.set(-70 + n * 16 + RN() * 8, -8 + RN() * 26, -50 + RN() * 100); m.userData = { sp: .5 + RN() * 1.2 }; scene.add(m); CLOUDS.push(m);
+  }
+}
+const RING = [];
+function buildRing() {
+  const cols = ['#f6a9c4', '#59d3c0', '#8ec5ff', '#ff9a8a', '#ffd35c', '#b9a2ff', '#8fdca0', '#ffe08a', '#6c63d9'];
+  for (let i = 0; i < 9; i++) {
+    const a = i / 9 * Math.PI * 2 + .3, R = 31, v = new Vox(); v.box(-1.2, -.3, -1.2, 2.4, .5, 2.4, '#ffffff'); v.box(-1.0, .2, -1.0, 2.0, .06, 2.0, '#efe8f7', 0);
+    const g = new THREE.Group(); g.add(v.mesh(matV)); g.position.set(Math.cos(a) * R, -1.5, Math.sin(a) * R);
+    const chip = new THREE.Mesh(new THREE.OctahedronGeometry(.75), new THREE.MeshBasicMaterial({ color: cols[i] })); chip.position.y = 1.6; chip.visible = false; g.add(chip);
+    scene.add(g); RING.push({ g, chip, base: g.position.y, ph: i * 1.3 });
+  }
+}
+/* partículas: folhas de dia, vaga-lumes de noite */
+let leaves, flies; const LV = [], FL = [];
+function buildParticles() {
+  const geo = new THREE.BoxGeometry(.22, .22, .22);
+  leaves = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: '#ffffff' }), 26); flies = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({ color: '#fff3a0' }), 30);
+  const cl = ['#5fc27a', '#ffb13d', '#ff8fb0', '#79d68f']; const c = new THREE.Color();
+  for (let i = 0; i < 26; i++) { LV.push({ x: (RN() - .5) * 9, y: RN() * 6, z: (RN() - .5) * 9, ph: RN() * 6, sp: .5 + RN() }); leaves.setColorAt(i, c.set(cl[i % 4])); }
+  for (let i = 0; i < 30; i++) FL.push({ x: (RN() - .5) * 34, y: 1 + RN() * 5, z: (RN() - .5) * 34, ph: RN() * 6 });
+  scene.add(leaves, flies);
+}
+
+/* ---------- hora do dia ---------- */
+const TOD = [
+  { h: 0, top: '#0f1038', bot: '#3b2e78', hs: '#6a6fd0', hg: '#3a2e60', hi: .75, sc: '#8da0ff', si: .35, win: 1, star: 1 },
+  { h: 5.5, top: '#2a2a70', bot: '#a46a9a', hs: '#8a86d8', hg: '#6a5a80', hi: .8, sc: '#ffb0a0', si: .5, win: .9, star: .5 },
+  { h: 7, top: '#9ec4ff', bot: '#ffd2c0', hs: '#ffffff', hg: '#d8c8e8', hi: 1.0, sc: '#ffe2c8', si: .8, win: 0, star: 0 },
+  { h: 10, top: '#b9dcff', bot: '#ffe0ea', hs: '#ffffff', hg: '#e6d8f0', hi: 1.0, sc: '#fff6e8', si: .95, win: 0, star: 0 },
+  { h: 16, top: '#b0d4ff', bot: '#ffe0dc', hs: '#ffffff', hg: '#e6d8f0', hi: 1.0, sc: '#fff0dc', si: .9, win: 0, star: 0 },
+  { h: 18, top: '#7d78d8', bot: '#ffa98a', hs: '#ffd6c8', hg: '#a88cc0', hi: .9, sc: '#ffb48a', si: .75, win: .6, star: .2 },
+  { h: 19.5, top: '#2f2a78', bot: '#c9709a', hs: '#9c92e0', hg: '#6a5a8a', hi: .8, sc: '#ff9aa8', si: .5, win: 1, star: .7 },
+  { h: 21, top: '#12113f', bot: '#3b2e78', hs: '#6a6fd0', hg: '#3a2e60', hi: .75, sc: '#8da0ff', si: .35, win: 1, star: 1 },
+  { h: 24, top: '#0f1038', bot: '#3b2e78', hs: '#6a6fd0', hg: '#3a2e60', hi: .75, sc: '#8da0ff', si: .35, win: 1, star: 1 }
+];
+const CC = new THREE.Color && null;
+let todNow = null;
+function todAt(h) {
+  let a = TOD[0], b = TOD[1];
+  for (let i = 0; i < TOD.length - 1; i++) if (h >= TOD[i].h && h <= TOD[i + 1].h) { a = TOD[i]; b = TOD[i + 1]; break; }
+  const u = (h - a.h) / (b.h - a.h), c = k => new THREE.Color(a[k]).lerp(new THREE.Color(b[k]), u);
+  return { top: c('top'), bot: c('bot'), hs: c('hs'), hg: c('hg'), hi: lerp(a.hi, b.hi, u), sc: c('sc'), si: lerp(a.si, b.si, u), win: lerp(a.win, b.win, u), star: lerp(a.star, b.star, u) };
+}
+function currentHour() {
+  if (st.tod === 'day') return 11; if (st.tod === 'dusk') return 18.2; if (st.tod === 'night') return 22;
+  const d = new Date(); return d.getHours() + d.getMinutes() / 60;
+}
+function applyTod() {
+  const h = currentHour(), t = todAt(h); todNow = t;
+  $('#sky').style.background = 'linear-gradient(#' + t.top.getHexString() + ',#' + t.bot.getHexString() + ')';
+  $('#stars').style.opacity = t.star.toFixed(2);
+  hemi.color.copy(t.hs); hemi.groundColor.copy(t.hg); hemi.intensity = t.hi * .95;
+  sun.color.copy(t.sc); sun.intensity = t.si * 1.05;
+  const day = clamp((h - 6) / 12, 0, 1), ang = Math.PI * day;
+  sun.position.set(Math.cos(ang) * 38 + 8, Math.max(14, Math.sin(ang) * 42), 26);
+  matWin.color.set(0xffffff).lerp(new THREE.Color('#ffd27a'), t.win).lerp(new THREE.Color('#bfe3ff'), (1 - t.win) * .55);
+  matEmis.color.set(0xffffff);
+  const label = h >= 5.5 && h < 7.5 ? 'dawn' : h >= 7.5 && h < 17.5 ? 'day' : h >= 17.5 && h < 19.5 ? 'dusk' : 'night';
+  $('#timeName').textContent = tr('t_' + label); $('#timeHint').textContent = st.tod === 'auto' ? tr('localtime') : tr('preview') + ' ' + tr('t_' + st.tod);
+  drawTimeIcon(label === 'night');
+}
+function drawTimeIcon(moon) {
+  const sun = ['..y.yy.y..', '.y..yy..y.', '..yyyyyy..', 'yyyyyyyyyy'.slice(0, 10), '.yyyyyyyy.', '.yyyyyyyy.', 'yyyyyyyyyy', '..yyyyyy..', '.y..yy..y.', '..y.yy.y..'];
+  const mo = ['..........', '...llll...', '..lll.....', '.lll......', '.lll......', '.lll......', '.llll.....', '..llllll..', '...llll...', '..........'];
+  const pal = { y: '#ffb300', l: '#7a63d9' }; let s = '';
+  (moon ? mo : sun).forEach((r, y) => { for (let x = 0; x < 10; x++) if (r[x] && r[x] !== '.') s += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + pal[r[x]] + '"/>'; });
+  $('#timeIcon').innerHTML = s;
+}
+function makeStars() {
+  const c = $('#stars'); c.width = innerWidth; c.height = innerHeight; const g = c.getContext('2d'); g.fillStyle = '#fff';
+  for (let i = 0; i < 160; i++) { const s = RN() > .9 ? 3 : 2; g.globalAlpha = .5 + RN() * .5; g.fillRect(Math.floor(RN() * c.width), Math.floor(RN() * c.height * .8), s, s); }
+}
+
+/* ---------- salas, painel, UI ---------- */
+const ROOMS = [
+  { key: 'casa', no: 1, name: 'casa', pos: PLOTS.casa, col: '#f6a9c4', icon: 'casa' },
+  { key: 'forja', no: 2, name: 'forja de ia', pos: PLOTS.forja, col: '#59d3c0', icon: 'ia' },
+  { key: 'voler', no: 3, name: 'voler cloud', pos: PLOTS.voler, col: '#8ec5ff', icon: 'nuvem' },
+  { key: 'patuve', no: 4, name: 'estúdio patuvê', pos: PLOTS.patuve, col: '#ff9a8a', icon: 'jogo' },
+  { key: 'trofeus', no: 5, name: 'game jams', pos: PLOTS.trofeus, col: '#ffd35c', icon: 'trofeu' },
+  { key: 'sbgames', no: 6, name: 'sbgames 2026', pos: PLOTS.sbgames, col: '#b9a2ff', icon: 'artigo' },
+  { key: 'aula', no: 7, name: 'sala de aula', pos: PLOTS.aula, col: '#8fdca0', icon: 'quadro' },
+  { key: 'formacao', no: 8, name: 'formação', pos: PLOTS.formacao, col: '#ffe08a', icon: 'capelo' },
+  { key: 'gate', no: 9, name: 'fase 2', pos: [0, 0], col: '#9a86ef', icon: 'portal' }
+];
+const PAL = { r: '#e5566b', w: '#ffffff', f: '#e8e2f6', k: '#1b1745', t: '#22c3b0', l: '#9a86ef', y: '#ffc857', o: '#c98a4b', g: '#2f7d58', b: '#8ec5ff', p: '#ff8f7a', n: '#6a4a3a' };
+const ICONS = {
+  casa: ['.....r.....', '....rrr....', '...rrrrr...', '..rrrrrrr..', '.rrrrrrrrr.', '..fffffff..', '..fffffff..', '..ffknkff..', '..ffknkff..', '..ffknkff..'],
+  ia: ['.....y.....', '.....k.....', '..ttttttt..', '.ttttttttt.', '.twwtttwwt.', '.twktttwkt.', '.ttttttttt.', '.tkkkkkkkt.', '..ttttttt..', '...t...t...'],
+  nuvem: ['...........', '....bbb....', '..bbbbbbb..', '.bbbbbbbbb.', 'bbbbbbbbbbb', 'bbbbbbbbbbb', '.bbbbbbbbb.', '...........', '...........', '...........'],
+  jogo: ['...........', '.ppppppppp.', 'pppppppppyp', 'pkppppppyyy', 'kkkppppppyp', 'pkppppppppp', 'ppppppppppp', '.pp.....pp.', '...........', '...........'],
+  trofeu: ['.yyyyyyyyy.', 'yyyyyyyyyyy', 'y.yyyyyyy.y', '..yyyyyyy..', '...yyyyy...', '....yyy....', '.....y.....', '.....y.....', '...ooooo...', '...ooooo...'],
+  artigo: ['..ffffffk..', '..fkkkkfk..', '..ffffffk..', '..fkkkkfk..', '..ffffffk..', '..fkkkffk..', '..ffffffk..', '..fkkkkfk..', '..kkkkkkk..', '...........'],
+  quadro: ['ooooooooooo', 'ogggggggggo', 'ogwwgwgggwo', 'oggggwwgggo', 'ogggggggggo', 'ooooooooooo', '..o.....o..', '..o.....o..', '...........', '...........'],
+  capelo: ['.....k.....', '...kkkkk...', '.kkkkkkkkk.', 'kkkkkkkkkkk', '.kkkkkkkkk.', '..kk.kk.kk.', '.....kky...', '.....k.y...', '.....k.y...', '...........'],
+  portal: ['...lllll...', '..lllllll..', '.lltttttll.', '.lttttttll.', '.lttwtttll.', '.lttttttll.', '.lttttttll.', '.lttttttll.', '.lllllllll.', '...........']
+};
+function iconSVG(k) { let s = '<svg viewBox="0 0 11 10" aria-hidden="true">'; ICONS[k].forEach((r, y) => { for (let x = 0; x < 11; x++) { const c = r[x]; if (c && c !== '.') s += '<rect x="' + x + '" y="' + y + '" width="1.02" height="1.02" fill="' + PAL[c] + '"/>'; } }); return s + '</svg>'; }
+
+/* ---------- idiomas ---------- */
+const LANGS = ['pt', 'en', 'es', 'it'];
+const HTMLLANG = { pt: 'pt-BR', en: 'en', es: 'es', it: 'it' };
+function detectLang() { const n = String(navigator.language || 'pt').slice(0, 2).toLowerCase(); return LANGS.includes(n) ? n : 'en'; }
+let LANG = detectLang();
+try { const s = localStorage.getItem('giulia-lang'); if (LANGS.includes(s)) LANG = s; } catch (e) { /* sem armazenamento */ }
+
+const UI = {
+  pt: {
+    docTitle: 'Ilha da Giulia', desc: 'Portfólio de Giulia Aragão, AI Builder: uma ilha em voxels com nove cômodos sobre agentes de IA, MCP, Google Cloud e jogos.',
+    lead: 'ai builder. construo agentes que ligam modelos de linguagem a ferramentas e dados de verdade, com mcp e google cloud. vim dos jogos, e esta ilha é um deles.',
+    play: 'explorar a ilha', termT: 'falar com o mcp', cv: 'modo currículo', term: 'terminal mcp', reduce: 'reduzir movimento', night: 'forçar noite',
+    explored: 'explorado', timeAria: 'mudar a hora do dia', lang: 'idioma', localtime: 'hora local', preview: 'prévia:',
+    t_dawn: 'amanhecer', t_day: 'dia', t_dusk: 'entardecer', t_night: 'noite',
+    hint: 'clique numa casinha, use os números 1 a 9 ou as setas do teclado.', done: 'ilha 100% explorada. valeu por passar por aqui!',
+    panelAria: 'detalhes do cômodo', barAria: 'cômodos da ilha', closePanel: 'fechar painel', prev: 'anterior', next: 'próximo',
+    termClose: 'fechar', termPh: 'digite help ou clique numa ferramenta', cvClose: 'voltar ao mundo',
+    cvNote: 'Mesmo conteúdo do meu currículo em PDF. Telefone e e-mail seguem pelo LinkedIn.',
+    engine: 'Não consegui carregar o motor 3D. O modo currículo continua funcionando.'
+  },
+  en: {
+    docTitle: "Giulia's Island", desc: "Giulia Aragão's portfolio, AI Builder: a voxel island with nine rooms about AI agents, MCP, Google Cloud and games.",
+    lead: 'ai builder. i build agents that connect language models to real tools and data, with mcp and google cloud. i came from games, and this island is one of them.',
+    play: 'explore the island', termT: 'talk to the mcp', cv: 'resume mode', term: 'mcp terminal', reduce: 'reduce motion', night: 'force night',
+    explored: 'explored', timeAria: 'change the time of day', lang: 'language', localtime: 'local time', preview: 'preview:',
+    t_dawn: 'dawn', t_day: 'day', t_dusk: 'dusk', t_night: 'night',
+    hint: 'click a little house, press the numbers 1 to 9 or use the arrow keys.', done: 'island 100% explored. thanks for stopping by!',
+    panelAria: 'room details', barAria: 'rooms of the island', closePanel: 'close panel', prev: 'previous', next: 'next',
+    termClose: 'close', termPh: 'type help or click a tool', cvClose: 'back to the island',
+    cvNote: 'Same content as my PDF résumé. Phone and email are available through LinkedIn.',
+    engine: 'Could not load the 3D engine. Resume mode still works.'
+  },
+  es: {
+    docTitle: 'La isla de Giulia', desc: 'Portafolio de Giulia Aragão, AI Builder: una isla de vóxeles con nueve salas sobre agentes de IA, MCP, Google Cloud y videojuegos.',
+    lead: 'ai builder. construyo agentes que conectan modelos de lenguaje con herramientas y datos reales, con mcp y google cloud. vengo de los videojuegos, y esta isla es uno de ellos.',
+    play: 'explorar la isla', termT: 'hablar con el mcp', cv: 'modo currículum', term: 'terminal mcp', reduce: 'reducir movimiento', night: 'forzar noche',
+    explored: 'explorado', timeAria: 'cambiar la hora del día', lang: 'idioma', localtime: 'hora local', preview: 'vista previa:',
+    t_dawn: 'amanecer', t_day: 'día', t_dusk: 'atardecer', t_night: 'noche',
+    hint: 'haz clic en una casita, usa los números del 1 al 9 o las flechas del teclado.', done: 'isla 100% explorada. ¡gracias por pasarte por aquí!',
+    panelAria: 'detalles de la sala', barAria: 'salas de la isla', closePanel: 'cerrar panel', prev: 'anterior', next: 'siguiente',
+    termClose: 'cerrar', termPh: 'escribe help o haz clic en una herramienta', cvClose: 'volver a la isla',
+    cvNote: 'Mismo contenido que mi currículum en PDF. El teléfono y el correo están disponibles por LinkedIn.',
+    engine: 'No pude cargar el motor 3D. El modo currículum sigue funcionando.'
+  },
+  it: {
+    docTitle: "L'isola di Giulia", desc: "Portfolio di Giulia Aragão, AI Builder: un'isola di voxel con nove stanze su agenti di IA, MCP, Google Cloud e videogiochi.",
+    lead: "ai builder. costruisco agenti che collegano modelli linguistici a strumenti e dati reali, con mcp e google cloud. vengo dai videogiochi, e quest'isola è uno di essi.",
+    play: "esplora l'isola", termT: "parla con l'mcp", cv: 'modalità cv', term: 'terminale mcp', reduce: 'riduci il movimento', night: 'forza la notte',
+    explored: 'esplorato', timeAria: "cambia l'ora del giorno", lang: 'lingua', localtime: 'ora locale', preview: 'anteprima:',
+    t_dawn: 'alba', t_day: 'giorno', t_dusk: 'tramonto', t_night: 'notte',
+    hint: 'clicca su una casetta, usa i numeri da 1 a 9 o le frecce della tastiera.', done: "isola esplorata al 100%. grazie per essere passato di qui!",
+    panelAria: 'dettagli della stanza', barAria: "stanze dell'isola", closePanel: 'chiudi il pannello', prev: 'precedente', next: 'successivo',
+    termClose: 'chiudi', termPh: 'scrivi help o clicca su uno strumento', cvClose: "torna all'isola",
+    cvNote: 'Stesso contenuto del mio cv in PDF. Telefono ed e-mail sono disponibili tramite LinkedIn.',
+    engine: 'Non sono riuscita a caricare il motore 3D. La modalità cv continua a funzionare.'
+  }
+};
+const t = k => (UI[LANG] && UI[LANG][k]) || UI.en[k] || k, tr = t;
+
+const ROOMNAMES = {
+  pt: ['casa', 'forja de ia', 'voler cloud', 'estúdio patuvê', 'game jams', 'sbgames 2026', 'sala de aula', 'formação', 'fase 2'],
+  en: ['home', 'ai forge', 'voler cloud', 'patuvê studio', 'game jams', 'sbgames 2026', 'classroom', 'education', 'stage 2'],
+  es: ['casa', 'forja de ia', 'voler cloud', 'estudio patuvê', 'game jams', 'sbgames 2026', 'aula', 'formación', 'fase 2'],
+  it: ['casa', "fucina dell'ia", 'voler cloud', 'studio patuvê', 'game jam', 'sbgames 2026', 'aula', 'formazione', 'fase 2']
+};
+
+/* painéis dos cômodos */
+const chips = (arr, ai) => '<ul class="chips' + (ai ? ' ai' : '') + '">' + arr.map(x => '<li>' + x + '</li>').join('') + '</ul>';
+const H = x => '<h3>' + x + '</h3>', P = x => '<p>' + x + '</p>', M = x => '<p class="meta">' + x + '</p>', UL = a => '<ul>' + a.map(x => '<li>' + x + '</li>').join('') + '</ul>';
+const ACTS = a => '<div class="acts">' + a.join('') + '</div>';
+const B = (label, attr, cls) => '<button class="btn small' + (cls ? ' ' + cls : '') + '" ' + attr + ' type="button">' + label + '</button>';
+const LINKS = (cvLabel) => ACTS(['<a class="btn small primary" href="https://www.linkedin.com/in/devsgiulia/" target="_blank" rel="noopener">linkedin</a>', '<a class="btn small" href="https://github.com/gisolinha" target="_blank" rel="noopener">github</a>', B(cvLabel, 'data-act="cv"')]);
+
+const PANELS = {
+  pt: {
+    casa: () => H('oi, eu sou a giulia') + P('sou ai builder e moro na paraíba. hoje sou ai &amp; cloud engineer na voler cloud, onde desenvolvo agentes de ia com mcp e arquiteturas no google cloud.') + P('antes disso, e junto com isso, fiz muito jogo: fui product owner num estúdio indie, liderei a equipe campeã da educajam e prototipo em unity.') + P('mentalidade ai-first: aprendo construindo e assumo as minhas entregas.') + ACTS([B('ver a forja de ia', 'data-go="2"', 'primary'), B('modo currículo', 'data-act="cv"')]) + M('use as casinhas, os números 1 a 9 ou as setas do teclado.'),
+    forja: () => M('onde eu mais gosto de construir') + H('agentes de ia com mcp') + P('desenvolvo agentes de ia com mcp (model context protocol) que conectam modelos de linguagem a ferramentas e fontes de dados.') + H('no que eu trabalho') + chips(['prompt engineering', 'agentes de ia', 'mcp', 'llms', 'deep learning', 'apis', 'análise de dados com ia'], true) + P('transformo necessidade de negócio em solução funcionando, em parceria com times multidisciplinares, e documento tudo para o time reaproveitar.') + ACTS([B('abrir o terminal mcp', 'data-act="term"', 'teal')]),
+    voler: () => M('ai &amp; cloud engineer, abr 2026 até hoje. remoto, brasil.') + UL(['desenvolvo agentes de ia com mcp que conectam modelos de linguagem a ferramentas e fontes de dados.', 'desenho ambientes seguros no google cloud (redes, iam e segurança) e otimizo serviços para reduzir custo sem perder desempenho.', 'transformo necessidades de negócio em soluções funcionando, com times multidisciplinares.', 'fui efetivada depois de 4 meses de estágio, assumindo mais responsabilidade pela estratégia de cloud da empresa no gcp.']) + H('antes, estágio') + M('cloud architect intern, jan a abr 2026') + P('apoiei o desenho e a implantação de soluções no google cloud, com foco em redes, segurança, custo e documentação técnica.'),
+    patuve: () => M('product owner, out 2025 a jan 2026. híbrido, brasil.') + UL(['priorizei o backlog do produto com scrum e kanban, transformando ideias em funcionalidades entregáveis.', 'escrevi e refinei documentação de design para designers e desenvolvedores construírem sem ambiguidade.', 'coordenei tarefas e prioridades em notion, jira e trello.', 'fiz a ponte entre gestão, design e desenvolvimento; conduzi sprint plannings, reviews e reuniões de equipe.', 'apoiei o qa identificando problemas de ux, gameplay e balanceamento.']),
+    trofeus: () => H('educajam') + M('nov a dez 2025. team lead, game designer, product owner e scrum master.') + P('1º lugar e dois prêmios que somaram R$ 5.000, entregando um jogo sob prazo reduzido.') + UL(['defini escopo, sprints e responsabilidades com metodologias ágeis, priorizando o que cabia no prazo.', 'desenhei as mecânicas e os sistemas centrais e documentei o design.']) + H('global game jam') + P('1º lugar e 3 prêmios.'),
+    sbgames: () => H('3 artigos no sbgames 2026') + P('apresentados e publicados no sbgames 2026, o simpósio brasileiro de jogos e entretenimento digital.') + P('é a minha base de pesquisa em jogos, que hoje se encontra com a graduação em inteligência artificial.'),
+    aula: () => M('professora de programação e engenharia criativa, ensino médio (1º e 2º ano). mar a jul 2023. presencial.') + UL(['ensinei programação, lógica e engenharia criativa com ferramentas e engines de desenvolvimento de jogos.', 'criei aulas práticas voltadas à resolução de problemas e ao trabalho em equipe, usando prototipagem como metodologia.', 'desenvolvi didática e comunicação para públicos não técnicos.']),
+    formacao: () => H('unifacisa') + UL(['graduação em inteligência artificial, out 2026 até hoje.', 'bacharelado em jogos digitais, fev 2025 até hoje.']) + H('google') + UL(['embaixadora estudantil do google (google student ambassador).', 'google launchpad for women, gen ai leader edition.']) + H('idiomas') + P('português nativo, inglês avançado, italiano básico.'),
+    gate: () => H('fase 2: ai builder') + P('quero construir soluções com ia de ponta a ponta, aprendendo construindo e assumindo as minhas entregas. bora conversar?') + LINKS('modo currículo')
+  },
+  en: {
+    casa: () => H('hi, i am giulia') + P('i am an ai builder based in paraíba, brazil. today i am an ai &amp; cloud engineer at voler cloud, where i develop ai agents with mcp and architectures on google cloud.') + P('before that, and alongside it, i made a lot of games: i was a product owner at an indie studio, led the winning educajam team and prototype in unity.') + P('ai-first mindset: i learn by building and own my deliverables.') + ACTS([B('see the ai forge', 'data-go="2"', 'primary'), B('resume mode', 'data-act="cv"')]) + M('use the little houses, the numbers 1 to 9 or the arrow keys.'),
+    forja: () => M('where i most like to build') + H('ai agents with mcp') + P('i develop ai agents with mcp (model context protocol) that connect language models to tools and data sources.') + H('what i work with') + chips(['prompt engineering', 'ai agents', 'mcp', 'llms', 'deep learning', 'apis', 'data analysis with ai'], true) + P('i turn business needs into working solutions with multidisciplinary teams, and document everything so the team can reuse it.') + ACTS([B('open the mcp terminal', 'data-act="term"', 'teal')]),
+    voler: () => M('ai &amp; cloud engineer, apr 2026 to present. remote, brazil.') + UL(['i develop ai agents with mcp that connect language models to tools and data sources.', 'i design secure environments on google cloud (networking, iam and security) and optimize services to cut cost without losing performance.', 'i turn business needs into working solutions with multidisciplinary teams.', "i was made permanent after a 4-month internship, taking on more responsibility for the company's cloud strategy on gcp."]) + H('before that, internship') + M('cloud architect intern, jan to apr 2026') + P('i supported the design and rollout of google cloud solutions, focusing on networking, security, cost and technical documentation.'),
+    patuve: () => M('product owner, oct 2025 to jan 2026. hybrid, brazil.') + UL(['i prioritized the product backlog with scrum and kanban, turning ideas into deliverable features.', 'i wrote and refined design documentation so designers and developers could build without ambiguity.', 'i coordinated tasks and priorities in notion, jira and trello.', 'i bridged management, design and development; i ran sprint plannings, reviews and team meetings.', 'i supported qa by spotting ux, gameplay and balance issues.']),
+    trofeus: () => H('educajam') + M('nov to dec 2025. team lead, game designer, product owner and scrum master.') + P('1st place and two prizes totaling R$ 5,000, delivering a game on a tight deadline.') + UL(['i defined scope, sprints and responsibilities with agile methods, prioritizing what fit the deadline.', 'i designed the core mechanics and systems and documented the design.']) + H('global game jam') + P('1st place and 3 prizes.'),
+    sbgames: () => H('3 papers at sbgames 2026') + P('presented and published at sbgames 2026, the brazilian symposium on games and digital entertainment.') + P('this is my games research base, which now meets my undergraduate degree in artificial intelligence.'),
+    aula: () => M('programming and creative engineering teacher, high school (1st and 2nd year). mar to jul 2023. in person.') + UL(['i taught programming, logic and creative engineering with game development tools and engines.', 'i created hands-on lessons focused on problem solving and teamwork, using prototyping as a method.', 'i developed teaching and communication skills for non-technical audiences.']),
+    formacao: () => H('unifacisa') + UL(['undergraduate degree in artificial intelligence, oct 2026 to present.', 'bachelor in digital games, feb 2025 to present.']) + H('google') + UL(['google student ambassador.', 'google launchpad for women, gen ai leader edition.']) + H('languages') + P('portuguese native, english advanced, italian basic.'),
+    gate: () => H('stage 2: ai builder') + P('i want to build ai solutions end to end, learning by building and owning my deliverables. shall we talk?') + LINKS('resume mode')
+  },
+  es: {
+    casa: () => H('hola, soy giulia') + P('soy ai builder y vivo en paraíba, brasil. hoy soy ai &amp; cloud engineer en voler cloud, donde desarrollo agentes de ia con mcp y arquitecturas en google cloud.') + P('antes de eso, y a la vez, hice muchos juegos: fui product owner en un estudio indie, lideré al equipo campeón de la educajam y hago prototipos en unity.') + P('mentalidad ai-first: aprendo construyendo y asumo mis entregas.') + ACTS([B('ver la forja de ia', 'data-go="2"', 'primary'), B('modo currículum', 'data-act="cv"')]) + M('usa las casitas, los números del 1 al 9 o las flechas del teclado.'),
+    forja: () => M('donde más disfruto construyendo') + H('agentes de ia con mcp') + P('desarrollo agentes de ia con mcp (model context protocol) que conectan modelos de lenguaje con herramientas y fuentes de datos.') + H('con qué trabajo') + chips(['prompt engineering', 'agentes de ia', 'mcp', 'llms', 'deep learning', 'apis', 'análisis de datos con ia'], true) + P('convierto necesidades de negocio en soluciones que funcionan, junto a equipos multidisciplinarios, y lo documento todo para que el equipo pueda reutilizarlo.') + ACTS([B('abrir la terminal mcp', 'data-act="term"', 'teal')]),
+    voler: () => M('ai &amp; cloud engineer, abr 2026 hasta hoy. remoto, brasil.') + UL(['desarrollo agentes de ia con mcp que conectan modelos de lenguaje con herramientas y fuentes de datos.', 'diseño entornos seguros en google cloud (redes, iam y seguridad) y optimizo servicios para reducir costos sin perder rendimiento.', 'convierto necesidades de negocio en soluciones que funcionan, con equipos multidisciplinarios.', 'me contrataron de forma efectiva tras 4 meses de pasantía, asumiendo más responsabilidad en la estrategia de cloud de la empresa en gcp.']) + H('antes, pasantía') + M('cloud architect intern, ene a abr 2026') + P('apoyé el diseño y la implementación de soluciones en google cloud, con foco en redes, seguridad, costos y documentación técnica.'),
+    patuve: () => M('product owner, oct 2025 a ene 2026. híbrido, brasil.') + UL(['prioricé el backlog del producto con scrum y kanban, convirtiendo ideas en funcionalidades entregables.', 'escribí y refiné documentación de diseño para que diseñadores y desarrolladores construyeran sin ambigüedad.', 'coordiné tareas y prioridades en notion, jira y trello.', 'hice de puente entre gestión, diseño y desarrollo; conduje sprint plannings, reviews y reuniones de equipo.', 'apoyé al qa identificando problemas de ux, gameplay y balance.']),
+    trofeus: () => H('educajam') + M('nov a dic 2025. team lead, game designer, product owner y scrum master.') + P('1.er lugar y dos premios que sumaron R$ 5.000, entregando un juego con plazo reducido.') + UL(['definí alcance, sprints y responsabilidades con metodologías ágiles, priorizando lo que cabía en el plazo.', 'diseñé las mecánicas y los sistemas centrales y documenté el diseño.']) + H('global game jam') + P('1.er lugar y 3 premios.'),
+    sbgames: () => H('3 artículos en el sbgames 2026') + P('presentados y publicados en el sbgames 2026, el simposio brasileño de juegos y entretenimiento digital.') + P('es mi base de investigación en juegos, que hoy se encuentra con la carrera en inteligencia artificial.'),
+    aula: () => M('profesora de programación e ingeniería creativa, secundaria (1.º y 2.º año). mar a jul 2023. presencial.') + UL(['enseñé programación, lógica e ingeniería creativa con herramientas y motores de desarrollo de juegos.', 'creé clases prácticas centradas en la resolución de problemas y el trabajo en equipo, usando el prototipado como metodología.', 'desarrollé didáctica y comunicación para públicos no técnicos.']),
+    formacao: () => H('unifacisa') + UL(['grado en inteligencia artificial, oct 2026 hasta hoy.', 'licenciatura en juegos digitales, feb 2025 hasta hoy.']) + H('google') + UL(['embajadora estudiantil de google (google student ambassador).', 'google launchpad for women, gen ai leader edition.']) + H('idiomas') + P('portugués nativo, inglés avanzado, italiano básico.'),
+    gate: () => H('fase 2: ai builder') + P('quiero construir soluciones con ia de punta a punta, aprendiendo construyendo y asumiendo mis entregas. ¿hablamos?') + LINKS('modo currículum')
+  },
+  it: {
+    casa: () => H('ciao, sono giulia') + P('sono una ai builder e vivo in paraíba, in brasile. oggi sono ai &amp; cloud engineer in voler cloud, dove sviluppo agenti di ia con mcp e architetture su google cloud.') + P('prima di questo, e insieme a questo, ho fatto molti giochi: sono stata product owner in uno studio indie, ho guidato il team vincitore della educajam e faccio prototipi in unity.') + P("mentalità ai-first: imparo costruendo e mi assumo la responsabilità di ciò che consegno.") + ACTS([B("vedi la fucina dell'ia", 'data-go="2"', 'primary'), B('modalità cv', 'data-act="cv"')]) + M('usa le casette, i numeri da 1 a 9 o le frecce della tastiera.'),
+    forja: () => M('dove mi piace di più costruire') + H('agenti di ia con mcp') + P('sviluppo agenti di ia con mcp (model context protocol) che collegano modelli linguistici a strumenti e fonti di dati.') + H('con cosa lavoro') + chips(['prompt engineering', 'agenti di ia', 'mcp', 'llm', 'deep learning', 'api', 'analisi dei dati con ia'], true) + P('trasformo le esigenze di business in soluzioni funzionanti, insieme a team multidisciplinari, e documento tutto così che il team possa riutilizzarlo.') + ACTS([B('apri il terminale mcp', 'data-act="term"', 'teal')]),
+    voler: () => M('ai &amp; cloud engineer, apr 2026 – oggi. da remoto, brasile.') + UL(['sviluppo agenti di ia con mcp che collegano modelli linguistici a strumenti e fonti di dati.', 'progetto ambienti sicuri su google cloud (reti, iam e sicurezza) e ottimizzo i servizi per ridurre i costi senza perdere prestazioni.', 'trasformo le esigenze di business in soluzioni funzionanti, con team multidisciplinari.', "sono stata assunta stabilmente dopo 4 mesi di tirocinio, con più responsabilità sulla strategia cloud dell'azienda su gcp."]) + H('prima, tirocinio') + M('cloud architect intern, gen – apr 2026') + P('ho supportato la progettazione e il rilascio di soluzioni su google cloud, con focus su reti, sicurezza, costi e documentazione tecnica.'),
+    patuve: () => M('product owner, ott 2025 – gen 2026. ibrido, brasile.') + UL(['ho dato priorità al backlog del prodotto con scrum e kanban, trasformando idee in funzionalità consegnabili.', 'ho scritto e rifinito la documentazione di design perché designer e sviluppatori costruissero senza ambiguità.', 'ho coordinato attività e priorità su notion, jira e trello.', 'ho fatto da ponte tra gestione, design e sviluppo; ho condotto sprint planning, review e riunioni di team.', 'ho supportato il qa individuando problemi di ux, gameplay e bilanciamento.']),
+    trofeus: () => H('educajam') + M('nov – dic 2025. team lead, game designer, product owner e scrum master.') + P('1º posto e due premi per un totale di R$ 5.000, consegnando un gioco con tempi ridotti.') + UL(['ho definito ambito, sprint e responsabilità con metodologie agili, dando priorità a ciò che stava nei tempi.', 'ho progettato le meccaniche e i sistemi centrali e documentato il design.']) + H('global game jam') + P('1º posto e 3 premi.'),
+    sbgames: () => H('3 articoli al sbgames 2026') + P('presentati e pubblicati al sbgames 2026, il simposio brasiliano su giochi e intrattenimento digitale.') + P("è la mia base di ricerca sui giochi, che oggi incontra la laurea in intelligenza artificiale."),
+    aula: () => M('insegnante di programmazione e ingegneria creativa, scuola superiore (1º e 2º anno). mar – lug 2023. in presenza.') + UL(['ho insegnato programmazione, logica e ingegneria creativa con strumenti e motori per lo sviluppo di giochi.', 'ho creato lezioni pratiche incentrate sulla risoluzione di problemi e sul lavoro di squadra, usando il prototipo come metodo.', 'ho sviluppato didattica e comunicazione per un pubblico non tecnico.']),
+    formacao: () => H('unifacisa') + UL(['laurea in intelligenza artificiale, ott 2026 – oggi.', 'laurea in giochi digitali, feb 2025 – oggi.']) + H('google') + UL(['ambasciatrice studentesca di google (google student ambassador).', 'google launchpad for women, gen ai leader edition.']) + H('lingue') + P('portoghese madrelingua, inglese avanzato, italiano base.'),
+    gate: () => H('fase 2: ai builder') + P("voglio costruire soluzioni con l'ia da un capo all'altro, imparando costruendo e assumendomi la responsabilità di ciò che consegno. ne parliamo?") + LINKS('modalità cv')
+  }
+};
+
+/* modo currículo */
+const CV = {
+  pt: {
+    place: 'Paraíba, Brasil', sumH: 'Resumo profissional', expH: 'Experiência profissional', skH: 'Habilidades', langH: 'Idiomas', eduH: 'Formação acadêmica', devH: 'Desenvolvimento profissional',
+    sum: 'AI Builder que constrói soluções com IA de ponta a ponta. No trabalho, desenvolvo agentes de IA com MCP (Model Context Protocol) e arquiteturas no Google Cloud como AI &amp; Cloud Engineer na Voler Cloud. Trago também a base de produto e de jogos: Product Owner em estúdio indie, líder da equipe campeã da EducaJam (1º lugar, dois prêmios) e prototipação rápida em Unity (C#). Autora de 3 artigos apresentados e publicados no SBGames 2026 e ex-professora de programação no ensino médio, tenho facilidade para explicar tecnologia a quem não é da área. Mentalidade AI-first: aprendo construindo e assumo as minhas entregas.',
+    jobs: [
+      { ai: 1, co: 'Voler Cloud', role: 'AI &amp; Cloud Engineer', loc: 'Remoto, Brasil', date: 'Abril 2026 – Presente', items: ['Desenvolvo agentes de IA com MCP (Model Context Protocol) que conectam modelos de linguagem a ferramentas e fontes de dados.', 'Desenho ambientes seguros no Google Cloud (redes, IAM e segurança) e otimizo serviços para reduzir custo sem perder desempenho.', 'Transformo necessidades de negócio em soluções funcionando, em parceria com times multidisciplinares, e documento tudo para o time reaproveitar.', 'Efetivada após 4 meses de estágio, assumindo mais responsabilidade pela estratégia de cloud da empresa no GCP.'] },
+      { co: 'Voler Cloud', role: 'Cloud Architect Intern', date: 'Janeiro 2026 – Abril 2026', items: ['Apoiei o desenho e a implantação de soluções no Google Cloud, com foco em redes, segurança, custo e documentação técnica.'] },
+      { co: 'PatuVê Studios', role: 'Product Owner', loc: 'Híbrido, Brasil', date: 'Outubro 2025 – Janeiro 2026', items: ['Priorizei o backlog do produto com Scrum e Kanban, transformando ideias em funcionalidades entregáveis.', 'Escrevi e refinei documentação clara de design para que designers e desenvolvedores construíssem sem ambiguidade.', 'Coordenei tarefas e prioridades em Notion, Jira e Trello.', 'Fiz a ponte entre gestão, design e desenvolvimento; conduzi sprint plannings, reviews e reuniões de equipe.', 'Apoiei o QA identificando problemas de UX, gameplay e balanceamento.'] },
+      { co: 'Programas de Educação Secundária', role: 'Professora de Programação e Engenharia Criativa (Ensino Médio, 1º e 2º ano)', loc: 'Presencial, Brasil', date: 'Março 2023 – Julho 2023', items: ['Ensinei programação, lógica e engenharia criativa com ferramentas e engines de desenvolvimento de jogos.', 'Criei aulas práticas voltadas à resolução de problemas e trabalho em equipe, usando prototipagem como metodologia.', 'Desenvolvi didática e comunicação para públicos não técnicos.'] },
+      { co: 'EducaJam, game jam premiada', role: 'Team Lead, Game Designer, Product Owner e Scrum Master', loc: 'Híbrido, Brasil', date: 'Novembro 2025 – Dezembro 2025', items: ['Liderei a equipe até o 1º lugar, com dois prêmios que somaram R$ 5.000, entregando um jogo sob prazo reduzido.', 'Defini escopo, sprints e responsabilidades com metodologias ágeis, priorizando o que cabia no prazo.', 'Desenhei as mecânicas e os sistemas centrais e documentei o design de forma clara e objetiva.', 'Identifiquei problemas em testes e colaborei nas soluções.'] }
+    ],
+    skills: [[1, 'IA e agentes', 'Prompt engineering, agentes de IA, MCP (Model Context Protocol), LLMs, deep learning'], [1, 'Automação e dados', 'APIs, análise de dados com IA'], [0, 'Linguagens', 'C#, Python, Java, JavaScript, Node, React, Unity Engine, Construct 2, Godot'], [0, 'Cloud', 'Google Cloud Platform (redes, IAM, segurança e controle de custo)'], [0, 'Produto e gestão', 'Scrum, Kanban, documentação de produto, Notion, Jira, Trello, Asana, Figma, Google Workspace'], [0, 'Engines', 'Unity (C#), Godot, Construct 2']],
+    langs: [['Português', 'Nativo'], ['Inglês', 'Avançado'], ['Italiano', 'Básico']],
+    edu: [['Unifacisa', 'Paraíba, Brasil', 'Graduação em Inteligência Artificial, outubro 2026 – Presente'], ['Unifacisa', 'Paraíba, Brasil', 'Bacharelado em Jogos Digitais, fevereiro 2025 – Presente']],
+    dev: ['3 artigos apresentados e publicados no SBGames 2026.', 'Embaixadora Estudantil do Google (Google Student Ambassador) e Google Launchpad for Women, Gen AI Leader Edition.', 'Game jams, construindo e entregando sob prazo curto: EducaJam (1º lugar e dois prêmios) e Global Game Jam (1º lugar e 3 prêmios).', 'Metodologias ágeis (Scrum e Kanban) aplicadas em equipes reais.']
+  },
+  en: {
+    place: 'Paraíba, Brazil', sumH: 'Professional summary', expH: 'Professional experience', skH: 'Skills', langH: 'Languages', eduH: 'Education', devH: 'Professional development',
+    sum: 'AI Builder who builds AI solutions end to end. At work, I develop AI agents with MCP (Model Context Protocol) and architectures on Google Cloud as an AI &amp; Cloud Engineer at Voler Cloud. I also bring a product and games background: Product Owner at an indie studio, leader of the winning EducaJam team (1st place, two prizes) and fast prototyping in Unity (C#). Author of 3 papers presented and published at SBGames 2026 and a former high school programming teacher, I explain technology easily to people outside the field. AI-first mindset: I learn by building and own my deliverables.',
+    jobs: [
+      { ai: 1, co: 'Voler Cloud', role: 'AI &amp; Cloud Engineer', loc: 'Remote, Brazil', date: 'April 2026 – Present', items: ['I develop AI agents with MCP (Model Context Protocol) that connect language models to tools and data sources.', 'I design secure environments on Google Cloud (networking, IAM and security) and optimize services to cut cost without losing performance.', 'I turn business needs into working solutions alongside multidisciplinary teams, and document everything so the team can reuse it.', "Made permanent after a 4-month internship, taking on more responsibility for the company's cloud strategy on GCP."] },
+      { co: 'Voler Cloud', role: 'Cloud Architect Intern', date: 'January 2026 – April 2026', items: ['Supported the design and rollout of Google Cloud solutions, focusing on networking, security, cost and technical documentation.'] },
+      { co: 'PatuVê Studios', role: 'Product Owner', loc: 'Hybrid, Brazil', date: 'October 2025 – January 2026', items: ['Prioritized the product backlog with Scrum and Kanban, turning ideas into deliverable features.', 'Wrote and refined clear design documentation so designers and developers could build without ambiguity.', 'Coordinated tasks and priorities in Notion, Jira and Trello.', 'Bridged management, design and development; ran sprint plannings, reviews and team meetings.', 'Supported QA by identifying UX, gameplay and balance issues.'] },
+      { co: 'Secondary Education Programs', role: 'Programming and Creative Engineering Teacher (High School, 1st and 2nd year)', loc: 'In person, Brazil', date: 'March 2023 – July 2023', items: ['Taught programming, logic and creative engineering with game development tools and engines.', 'Created hands-on lessons focused on problem solving and teamwork, using prototyping as a method.', 'Developed teaching and communication skills for non-technical audiences.'] },
+      { co: 'EducaJam, award-winning game jam', role: 'Team Lead, Game Designer, Product Owner and Scrum Master', loc: 'Hybrid, Brazil', date: 'November 2025 – December 2025', items: ['Led the team to 1st place, with two prizes totaling R$ 5,000, delivering a game on a tight deadline.', 'Defined scope, sprints and responsibilities with agile methods, prioritizing what fit the deadline.', 'Designed the core mechanics and systems and documented the design clearly and concisely.', 'Found issues in testing and collaborated on the fixes.'] }
+    ],
+    skills: [[1, 'AI and agents', 'Prompt engineering, AI agents, MCP (Model Context Protocol), LLMs, deep learning'], [1, 'Automation and data', 'APIs, data analysis with AI'], [0, 'Programming languages', 'C#, Python, Java, JavaScript, Node, React, Unity Engine, Construct 2, Godot'], [0, 'Cloud', 'Google Cloud Platform (networking, IAM, security and cost control)'], [0, 'Product and management', 'Scrum, Kanban, product documentation, Notion, Jira, Trello, Asana, Figma, Google Workspace'], [0, 'Engines', 'Unity (C#), Godot, Construct 2']],
+    langs: [['Portuguese', 'Native'], ['English', 'Advanced'], ['Italian', 'Basic']],
+    edu: [['Unifacisa', 'Paraíba, Brazil', 'Undergraduate degree in Artificial Intelligence, October 2026 – Present'], ['Unifacisa', 'Paraíba, Brazil', "Bachelor's degree in Digital Games, February 2025 – Present"]],
+    dev: ['3 papers presented and published at SBGames 2026.', 'Google Student Ambassador and Google Launchpad for Women, Gen AI Leader Edition.', 'Game jams, building and shipping on short deadlines: EducaJam (1st place and two prizes) and Global Game Jam (1st place and 3 prizes).', 'Agile methods (Scrum and Kanban) applied in real teams.']
+  },
+  es: {
+    place: 'Paraíba, Brasil', sumH: 'Resumen profesional', expH: 'Experiencia profesional', skH: 'Habilidades', langH: 'Idiomas', eduH: 'Formación académica', devH: 'Desarrollo profesional',
+    sum: 'AI Builder que construye soluciones con IA de punta a punta. En el trabajo, desarrollo agentes de IA con MCP (Model Context Protocol) y arquitecturas en Google Cloud como AI &amp; Cloud Engineer en Voler Cloud. Aporto también la base de producto y de videojuegos: Product Owner en un estudio indie, líder del equipo campeón de la EducaJam (1.er lugar, dos premios) y prototipado rápido en Unity (C#). Autora de 3 artículos presentados y publicados en el SBGames 2026 y exprofesora de programación en secundaria, me resulta fácil explicar tecnología a quien no es del área. Mentalidad AI-first: aprendo construyendo y asumo mis entregas.',
+    jobs: [
+      { ai: 1, co: 'Voler Cloud', role: 'AI &amp; Cloud Engineer', loc: 'Remoto, Brasil', date: 'Abril 2026 – Presente', items: ['Desarrollo agentes de IA con MCP (Model Context Protocol) que conectan modelos de lenguaje con herramientas y fuentes de datos.', 'Diseño entornos seguros en Google Cloud (redes, IAM y seguridad) y optimizo servicios para reducir costos sin perder rendimiento.', 'Convierto necesidades de negocio en soluciones que funcionan, junto a equipos multidisciplinarios, y lo documento todo para que el equipo pueda reutilizarlo.', 'Contratada de forma efectiva tras 4 meses de pasantía, asumiendo más responsabilidad en la estrategia de cloud de la empresa en GCP.'] },
+      { co: 'Voler Cloud', role: 'Cloud Architect Intern', date: 'Enero 2026 – Abril 2026', items: ['Apoyé el diseño y la implementación de soluciones en Google Cloud, con foco en redes, seguridad, costos y documentación técnica.'] },
+      { co: 'PatuVê Studios', role: 'Product Owner', loc: 'Híbrido, Brasil', date: 'Octubre 2025 – Enero 2026', items: ['Prioricé el backlog del producto con Scrum y Kanban, convirtiendo ideas en funcionalidades entregables.', 'Escribí y refiné documentación clara de diseño para que diseñadores y desarrolladores construyeran sin ambigüedad.', 'Coordiné tareas y prioridades en Notion, Jira y Trello.', 'Hice de puente entre gestión, diseño y desarrollo; conduje sprint plannings, reviews y reuniones de equipo.', 'Apoyé al QA identificando problemas de UX, gameplay y balance.'] },
+      { co: 'Programas de Educación Secundaria', role: 'Profesora de Programación e Ingeniería Creativa (Secundaria, 1.º y 2.º año)', loc: 'Presencial, Brasil', date: 'Marzo 2023 – Julio 2023', items: ['Enseñé programación, lógica e ingeniería creativa con herramientas y motores de desarrollo de juegos.', 'Creé clases prácticas centradas en la resolución de problemas y el trabajo en equipo, usando el prototipado como metodología.', 'Desarrollé didáctica y comunicación para públicos no técnicos.'] },
+      { co: 'EducaJam, game jam premiada', role: 'Team Lead, Game Designer, Product Owner y Scrum Master', loc: 'Híbrido, Brasil', date: 'Noviembre 2025 – Diciembre 2025', items: ['Lideré al equipo hasta el 1.er lugar, con dos premios que sumaron R$ 5.000, entregando un juego con plazo reducido.', 'Definí alcance, sprints y responsabilidades con metodologías ágiles, priorizando lo que cabía en el plazo.', 'Diseñé las mecánicas y los sistemas centrales y documenté el diseño de forma clara y concisa.', 'Identifiqué problemas en las pruebas y colaboré en las soluciones.'] }
+    ],
+    skills: [[1, 'IA y agentes', 'Prompt engineering, agentes de IA, MCP (Model Context Protocol), LLMs, deep learning'], [1, 'Automatización y datos', 'APIs, análisis de datos con IA'], [0, 'Lenguajes', 'C#, Python, Java, JavaScript, Node, React, Unity Engine, Construct 2, Godot'], [0, 'Cloud', 'Google Cloud Platform (redes, IAM, seguridad y control de costos)'], [0, 'Producto y gestión', 'Scrum, Kanban, documentación de producto, Notion, Jira, Trello, Asana, Figma, Google Workspace'], [0, 'Motores', 'Unity (C#), Godot, Construct 2']],
+    langs: [['Portugués', 'Nativo'], ['Inglés', 'Avanzado'], ['Italiano', 'Básico']],
+    edu: [['Unifacisa', 'Paraíba, Brasil', 'Grado en Inteligencia Artificial, octubre 2026 – Presente'], ['Unifacisa', 'Paraíba, Brasil', 'Licenciatura en Juegos Digitales, febrero 2025 – Presente']],
+    dev: ['3 artículos presentados y publicados en el SBGames 2026.', 'Embajadora Estudiantil de Google (Google Student Ambassador) y Google Launchpad for Women, Gen AI Leader Edition.', 'Game jams, construyendo y entregando con plazos cortos: EducaJam (1.er lugar y dos premios) y Global Game Jam (1.er lugar y 3 premios).', 'Metodologías ágiles (Scrum y Kanban) aplicadas en equipos reales.']
+  },
+  it: {
+    place: 'Paraíba, Brasile', sumH: 'Profilo professionale', expH: 'Esperienza professionale', skH: 'Competenze', langH: 'Lingue', eduH: 'Formazione accademica', devH: 'Sviluppo professionale',
+    sum: "AI Builder che costruisce soluzioni di IA da un capo all'altro. Al lavoro sviluppo agenti di IA con MCP (Model Context Protocol) e architetture su Google Cloud come AI &amp; Cloud Engineer in Voler Cloud. Porto con me anche la base di prodotto e di videogiochi: Product Owner in uno studio indie, leader del team vincitore della EducaJam (1º posto, due premi) e prototipazione rapida in Unity (C#). Autrice di 3 articoli presentati e pubblicati al SBGames 2026 ed ex insegnante di programmazione alle superiori, spiego volentieri la tecnologia a chi non è del settore. Mentalità AI-first: imparo costruendo e mi assumo la responsabilità di ciò che consegno.",
+    jobs: [
+      { ai: 1, co: 'Voler Cloud', role: 'AI &amp; Cloud Engineer', loc: 'Da remoto, Brasile', date: 'Aprile 2026 – Presente', items: ['Sviluppo agenti di IA con MCP (Model Context Protocol) che collegano modelli linguistici a strumenti e fonti di dati.', 'Progetto ambienti sicuri su Google Cloud (reti, IAM e sicurezza) e ottimizzo i servizi per ridurre i costi senza perdere prestazioni.', 'Trasformo le esigenze di business in soluzioni funzionanti, insieme a team multidisciplinari, e documento tutto perché il team possa riutilizzarlo.', "Assunta stabilmente dopo 4 mesi di tirocinio, con più responsabilità sulla strategia cloud dell'azienda su GCP."] },
+      { co: 'Voler Cloud', role: 'Cloud Architect Intern', date: 'Gennaio 2026 – Aprile 2026', items: ['Ho supportato la progettazione e il rilascio di soluzioni su Google Cloud, con focus su reti, sicurezza, costi e documentazione tecnica.'] },
+      { co: 'PatuVê Studios', role: 'Product Owner', loc: 'Ibrido, Brasile', date: 'Ottobre 2025 – Gennaio 2026', items: ['Ho dato priorità al backlog del prodotto con Scrum e Kanban, trasformando idee in funzionalità consegnabili.', 'Ho scritto e rifinito una documentazione di design chiara perché designer e sviluppatori costruissero senza ambiguità.', 'Ho coordinato attività e priorità su Notion, Jira e Trello.', 'Ho fatto da ponte tra gestione, design e sviluppo; ho condotto sprint planning, review e riunioni di team.', 'Ho supportato il QA individuando problemi di UX, gameplay e bilanciamento.'] },
+      { co: 'Programmi di Istruzione Secondaria', role: 'Insegnante di Programmazione e Ingegneria Creativa (Scuola superiore, 1º e 2º anno)', loc: 'In presenza, Brasile', date: 'Marzo 2023 – Luglio 2023', items: ['Ho insegnato programmazione, logica e ingegneria creativa con strumenti e motori per lo sviluppo di giochi.', 'Ho creato lezioni pratiche incentrate sulla risoluzione di problemi e sul lavoro di squadra, usando il prototipo come metodologia.', 'Ho sviluppato didattica e comunicazione per un pubblico non tecnico.'] },
+      { co: 'EducaJam, game jam premiata', role: 'Team Lead, Game Designer, Product Owner e Scrum Master', loc: 'Ibrido, Brasile', date: 'Novembre 2025 – Dicembre 2025', items: ['Ho guidato il team al 1º posto, con due premi per un totale di R$ 5.000, consegnando un gioco con tempi ridotti.', 'Ho definito ambito, sprint e responsabilità con metodologie agili, dando priorità a ciò che stava nei tempi.', 'Ho progettato le meccaniche e i sistemi centrali e documentato il design in modo chiaro e sintetico.', 'Ho individuato problemi nei test e collaborato alle soluzioni.'] }
+    ],
+    skills: [[1, 'IA e agenti', 'Prompt engineering, agenti di IA, MCP (Model Context Protocol), LLM, deep learning'], [1, 'Automazione e dati', 'API, analisi dei dati con IA'], [0, 'Linguaggi', 'C#, Python, Java, JavaScript, Node, React, Unity Engine, Construct 2, Godot'], [0, 'Cloud', 'Google Cloud Platform (reti, IAM, sicurezza e controllo dei costi)'], [0, 'Prodotto e gestione', 'Scrum, Kanban, documentazione di prodotto, Notion, Jira, Trello, Asana, Figma, Google Workspace'], [0, 'Motori', 'Unity (C#), Godot, Construct 2']],
+    langs: [['Portoghese', 'Madrelingua'], ['Inglese', 'Avanzato'], ['Italiano', 'Base']],
+    edu: [['Unifacisa', 'Paraíba, Brasile', 'Laurea in Intelligenza Artificiale, ottobre 2026 – Presente'], ['Unifacisa', 'Paraíba, Brasile', 'Laurea in Giochi Digitali, febbraio 2025 – Presente']],
+    dev: ['3 articoli presentati e pubblicati al SBGames 2026.', 'Ambasciatrice Studentesca di Google (Google Student Ambassador) e Google Launchpad for Women, Gen AI Leader Edition.', 'Game jam, costruendo e consegnando con scadenze brevi: EducaJam (1º posto e due premi) e Global Game Jam (1º posto e 3 premi).', 'Metodologie agili (Scrum e Kanban) applicate in team reali.']
+  }
+};
+function cvBuild(c) {
+  const li = a => '<ul>' + a.map(x => '<li>' + x + '</li>').join('') + '</ul>';
+  const jobs = c.jobs.map(j => '<div class="job' + (j.ai ? ' ai' : '') + '"><div class="job-head"><div><b>' + j.co + '</b><i>' + j.role + '</i></div><div class="r">' + (j.loc ? '<b>' + j.loc + '</b>' : '') + '<i>' + j.date + '</i></div></div>' + li(j.items) + '</div>').join('');
+  const sk = c.skills.map(s => '<div' + (s[0] ? ' class="ai"' : '') + '><dt>' + s[1] + '</dt><dd>' + s[2] + '</dd></div>').join('');
+  const lg = c.langs.map(l => '<b>' + l[0] + ':</b> ' + l[1]).join('<br>');
+  const ed = c.edu.map(e => '<div class="edu"><b>' + e[0] + '</b> <span>' + e[1] + '</span><i>' + e[2] + '</i></div>').join('');
+  return '<header class="cv-head"><h2 id="cvName">Giulia Aragão</h2><div class="cv-links"><span>' + c.place + '</span><a href="https://www.linkedin.com/in/devsgiulia/" target="_blank" rel="noopener">linkedin.com/in/devsgiulia</a><a href="https://github.com/gisolinha" target="_blank" rel="noopener">github.com/gisolinha</a></div></header>' +
+    '<section><h3>' + c.sumH + '</h3><p>' + c.sum + '</p></section><section><h3>' + c.expH + '</h3>' + jobs + '</section><section><h3>' + c.skH + '</h3><dl class="skills">' + sk + '</dl></section>' +
+    '<div class="cv-duo"><section><h3>' + c.langH + '</h3><p>' + lg + '</p></section><section><h3>' + c.eduH + '</h3>' + ed + '</section></div><section><h3>' + c.devH + '</h3>' + li(c.dev) + '</section>';
+}
+
+/* terminal mcp */
+const TOOLNAMES = ['get_ai', 'get_experience', 'get_skills', 'get_games', 'get_education', 'get_contact'];
+const LI = { a: ['linkedin.com/in/devsgiulia', 'https://www.linkedin.com/in/devsgiulia/'] }, GH = { a: ['github.com/gisolinha', 'https://github.com/gisolinha'] };
+const TERM = {
+  pt: {
+    get_ai: ['ia e agentes: prompt engineering, agentes de ia, mcp (model context protocol), llms, deep learning', 'automação e dados: apis, análise de dados com ia', 'no trabalho: agentes de ia com mcp que conectam modelos de linguagem a ferramentas e fontes de dados, rodando em ambientes seguros no google cloud.', 'mentalidade ai-first: aprendo construindo e assumo as minhas entregas.'],
+    get_experience: ['voler cloud, ai & cloud engineer (abr 2026 até hoje)', '  agentes de ia com mcp, ambientes seguros no google cloud (redes, iam e segurança), otimização de custo.', '  antes, estagiária de cloud architect (jan a abr 2026). efetivada depois de 4 meses.', 'patuvê studios, product owner (out 2025 a jan 2026)', 'educajam, nov a dez 2025: 1º lugar e dois prêmios, somando R$ 5.000', '  team lead, game designer, po e scrum master.', 'programas de educação secundária, professora de programação e engenharia criativa (mar a jul 2023)'],
+    get_skills: ['ia e agentes: prompt engineering, agentes de ia, mcp, llms, deep learning', 'automação e dados: apis, análise de dados com ia', 'linguagens: c#, python, java, javascript, node, react', 'engines: unity (c#), godot, construct 2', 'cloud: google cloud platform (redes, iam, segurança e controle de custo)', 'produto e gestão: scrum, kanban, notion, jira, trello, asana, figma, google workspace', 'idiomas: português nativo, inglês avançado, italiano básico'],
+    get_games: ['educajam (nov a dez 2025): 1º lugar e dois prêmios', 'global game jam: 1º lugar e 3 prêmios', 'sbgames 2026: 3 artigos apresentados e publicados', 'patuvê studios: product owner (out 2025 a jan 2026)'],
+    get_education: ['unifacisa, graduação em inteligência artificial (out 2026 até hoje)', 'unifacisa, bacharelado em jogos digitais (fev 2025 até hoje)', 'embaixadora estudantil do google (google student ambassador)', 'google launchpad for women, gen ai leader edition'],
+    contact: 'telefone e e-mail: chame pelo linkedin.', help: 'ferramentas disponíveis:', tip: 'dica: tente whoami ou sudo contratar giulia',
+    who: ['giulia aragão, ai & cloud engineer na voler cloud.', 'agentes de ia, mcp, llms, google cloud. paraíba, brasil.'], granted: 'permissão concedida.', open: 'abrir conversa no linkedin',
+    denied: 'sudo: giulia não tem acesso de administrador a isso. tente: sudo contratar giulia', nf: 'ferramenta não encontrada: ', nf2: 'digite help para ver a lista.',
+    boot: ['conectando em mcp://giulia ...', 'servidor conectado. 6 ferramentas disponíveis. comece por get_ai().', 'clique numa ferramenta ou digite help.']
+  },
+  en: {
+    get_ai: ['ai and agents: prompt engineering, ai agents, mcp (model context protocol), llms, deep learning', 'automation and data: apis, data analysis with ai', 'at work: ai agents with mcp that connect language models to tools and data sources, running in secure environments on google cloud.', 'ai-first mindset: i learn by building and own my deliverables.'],
+    get_experience: ['voler cloud, ai & cloud engineer (apr 2026 to present)', '  ai agents with mcp, secure google cloud environments (networking, iam and security), cost optimization.', '  before that, cloud architect intern (jan to apr 2026). made permanent after 4 months.', 'patuvê studios, product owner (oct 2025 to jan 2026)', 'educajam, nov to dec 2025: 1st place and two prizes, totaling R$ 5,000', '  team lead, game designer, po and scrum master.', 'secondary education programs, programming and creative engineering teacher (mar to jul 2023)'],
+    get_skills: ['ai and agents: prompt engineering, ai agents, mcp, llms, deep learning', 'automation and data: apis, data analysis with ai', 'programming languages: c#, python, java, javascript, node, react', 'engines: unity (c#), godot, construct 2', 'cloud: google cloud platform (networking, iam, security and cost control)', 'product and management: scrum, kanban, notion, jira, trello, asana, figma, google workspace', 'spoken languages: portuguese native, english advanced, italian basic'],
+    get_games: ['educajam (nov to dec 2025): 1st place and two prizes', 'global game jam: 1st place and 3 prizes', 'sbgames 2026: 3 papers presented and published', 'patuvê studios: product owner (oct 2025 to jan 2026)'],
+    get_education: ['unifacisa, undergraduate degree in artificial intelligence (oct 2026 to present)', 'unifacisa, bachelor in digital games (feb 2025 to present)', 'google student ambassador', 'google launchpad for women, gen ai leader edition'],
+    contact: 'phone and email: reach out on linkedin.', help: 'available tools:', tip: 'tip: try whoami or sudo hire giulia',
+    who: ['giulia aragão, ai & cloud engineer at voler cloud.', 'ai agents, mcp, llms, google cloud. paraíba, brazil.'], granted: 'permission granted.', open: 'open a chat on linkedin',
+    denied: 'sudo: giulia does not give admin access to that. try: sudo hire giulia', nf: 'tool not found: ', nf2: 'type help to see the list.',
+    boot: ['connecting to mcp://giulia ...', 'server connected. 6 tools available. start with get_ai().', 'click a tool or type help.']
+  },
+  es: {
+    get_ai: ['ia y agentes: prompt engineering, agentes de ia, mcp (model context protocol), llms, deep learning', 'automatización y datos: apis, análisis de datos con ia', 'en el trabajo: agentes de ia con mcp que conectan modelos de lenguaje con herramientas y fuentes de datos, corriendo en entornos seguros en google cloud.', 'mentalidad ai-first: aprendo construyendo y asumo mis entregas.'],
+    get_experience: ['voler cloud, ai & cloud engineer (abr 2026 hasta hoy)', '  agentes de ia con mcp, entornos seguros en google cloud (redes, iam y seguridad), optimización de costos.', '  antes, pasante de cloud architect (ene a abr 2026). contratada tras 4 meses.', 'patuvê studios, product owner (oct 2025 a ene 2026)', 'educajam, nov a dic 2025: 1.er lugar y dos premios, sumando R$ 5.000', '  team lead, game designer, po y scrum master.', 'programas de educación secundaria, profesora de programación e ingeniería creativa (mar a jul 2023)'],
+    get_skills: ['ia y agentes: prompt engineering, agentes de ia, mcp, llms, deep learning', 'automatización y datos: apis, análisis de datos con ia', 'lenguajes: c#, python, java, javascript, node, react', 'motores: unity (c#), godot, construct 2', 'cloud: google cloud platform (redes, iam, seguridad y control de costos)', 'producto y gestión: scrum, kanban, notion, jira, trello, asana, figma, google workspace', 'idiomas: portugués nativo, inglés avanzado, italiano básico'],
+    get_games: ['educajam (nov a dic 2025): 1.er lugar y dos premios', 'global game jam: 1.er lugar y 3 premios', 'sbgames 2026: 3 artículos presentados y publicados', 'patuvê studios: product owner (oct 2025 a ene 2026)'],
+    get_education: ['unifacisa, grado en inteligencia artificial (oct 2026 hasta hoy)', 'unifacisa, licenciatura en juegos digitales (feb 2025 hasta hoy)', 'embajadora estudiantil de google (google student ambassador)', 'google launchpad for women, gen ai leader edition'],
+    contact: 'teléfono y correo: escríbeme por linkedin.', help: 'herramientas disponibles:', tip: 'pista: prueba whoami o sudo contratar giulia',
+    who: ['giulia aragão, ai & cloud engineer en voler cloud.', 'agentes de ia, mcp, llms, google cloud. paraíba, brasil.'], granted: 'permiso concedido.', open: 'abrir conversación en linkedin',
+    denied: 'sudo: giulia no da acceso de administrador a eso. prueba: sudo contratar giulia', nf: 'herramienta no encontrada: ', nf2: 'escribe help para ver la lista.',
+    boot: ['conectando a mcp://giulia ...', 'servidor conectado. 6 herramientas disponibles. empieza por get_ai().', 'haz clic en una herramienta o escribe help.']
+  },
+  it: {
+    get_ai: ['ia e agenti: prompt engineering, agenti di ia, mcp (model context protocol), llm, deep learning', 'automazione e dati: api, analisi dei dati con ia', 'al lavoro: agenti di ia con mcp che collegano modelli linguistici a strumenti e fonti di dati, in esecuzione in ambienti sicuri su google cloud.', 'mentalità ai-first: imparo costruendo e mi assumo la responsabilità di ciò che consegno.'],
+    get_experience: ['voler cloud, ai & cloud engineer (apr 2026 – oggi)', '  agenti di ia con mcp, ambienti sicuri su google cloud (reti, iam e sicurezza), ottimizzazione dei costi.', '  prima, tirocinante cloud architect (gen – apr 2026). assunta dopo 4 mesi.', 'patuvê studios, product owner (ott 2025 – gen 2026)', 'educajam, nov – dic 2025: 1º posto e due premi, per un totale di R$ 5.000', '  team lead, game designer, po e scrum master.', 'programmi di istruzione secondaria, insegnante di programmazione e ingegneria creativa (mar – lug 2023)'],
+    get_skills: ['ia e agenti: prompt engineering, agenti di ia, mcp, llm, deep learning', 'automazione e dati: api, analisi dei dati con ia', 'linguaggi: c#, python, java, javascript, node, react', 'motori: unity (c#), godot, construct 2', 'cloud: google cloud platform (reti, iam, sicurezza e controllo dei costi)', 'prodotto e gestione: scrum, kanban, notion, jira, trello, asana, figma, google workspace', 'lingue: portoghese madrelingua, inglese avanzato, italiano base'],
+    get_games: ['educajam (nov – dic 2025): 1º posto e due premi', 'global game jam: 1º posto e 3 premi', 'sbgames 2026: 3 articoli presentati e pubblicati', 'patuvê studios: product owner (ott 2025 – gen 2026)'],
+    get_education: ['unifacisa, laurea in intelligenza artificiale (ott 2026 – oggi)', 'unifacisa, laurea in giochi digitali (feb 2025 – oggi)', 'ambasciatrice studentesca di google (google student ambassador)', 'google launchpad for women, gen ai leader edition'],
+    contact: 'telefono ed e-mail: scrivimi su linkedin.', help: 'strumenti disponibili:', tip: 'suggerimento: prova whoami o sudo assumere giulia',
+    who: ['giulia aragão, ai & cloud engineer in voler cloud.', 'agenti di ia, mcp, llm, google cloud. paraíba, brasile.'], granted: 'permesso concesso.', open: 'apri una conversazione su linkedin',
+    denied: 'sudo: giulia non dà accesso da amministratore a questo. prova: sudo assumere giulia', nf: 'strumento non trovato: ', nf2: "scrivi help per vedere l'elenco.",
+    boot: ['connessione a mcp://giulia ...', 'server connesso. 6 strumenti disponibili. inizia con get_ai().', 'clicca su uno strumento o scrivi help.']
+  }
+};
+const TOOLS = { get_ai: () => TERM[LANG].get_ai, get_experience: () => TERM[LANG].get_experience, get_skills: () => TERM[LANG].get_skills, get_games: () => TERM[LANG].get_games, get_education: () => TERM[LANG].get_education, get_contact: () => [LI, GH, TERM[LANG].contact] };
+const ALIAS = { ai: 'get_ai', ia: 'get_ai', agentes: 'get_ai', agents: 'get_ai', agenti: 'get_ai', mcp: 'get_ai', llm: 'get_ai', llms: 'get_ai', experience: 'get_experience', experiencia: 'get_experience', esperienza: 'get_experience', exp: 'get_experience', trabalho: 'get_experience', trabajo: 'get_experience', lavoro: 'get_experience', work: 'get_experience', skills: 'get_skills', habilidades: 'get_skills', competenze: 'get_skills', stack: 'get_skills', ferramentas: 'get_skills', games: 'get_games', jogos: 'get_games', juegos: 'get_games', giochi: 'get_games', projetos: 'get_games', proyectos: 'get_games', progetti: 'get_games', projects: 'get_games', education: 'get_education', educacao: 'get_education', educacion: 'get_education', formacao: 'get_education', formacion: 'get_education', formazione: 'get_education', contact: 'get_contact', contato: 'get_contact', contacto: 'get_contact', contatto: 'get_contact', linkedin: 'get_contact', github: 'get_contact' };
+let termBooted = false, termQ = [], termTimer = 0;
+function tPrint(line, cls) {
+  const p = document.createElement('p'); if (cls) p.className = cls;
+  if (typeof line === 'string') p.textContent = line; else { const a = document.createElement('a'); a.href = line.a[1]; a.target = '_blank'; a.rel = 'noopener'; a.textContent = line.a[0]; p.append(a); }
+  el.out.append(p); el.out.scrollTop = el.out.scrollHeight;
+}
+function tFlush() { if (termTimer || !termQ.length) return; termTimer = setInterval(() => { const q = termQ.shift(); if (!q) { clearInterval(termTimer); termTimer = 0; return; } tPrint(q[0], q[1]); }, reduced ? 0 : 55); }
+function tQueue(lines, cls) { lines.forEach(l => termQ.push([l, cls])); if (reduced) { while (termQ.length) { const q = termQ.shift(); tPrint(q[0], q[1]); } } else tFlush(); }
+function runCmd(raw) {
+  const c = raw.trim().toLowerCase().replace(/\(\)$/, '').replace(/\(.*\)$/, ''), T = TERM[LANG]; if (!c) return;
+  tPrint('$ ' + raw.trim(), 'cmd');
+  if (c === 'clear') { el.out.innerHTML = ''; return; }
+  if (c === 'help' || c === 'ls' || c === 'tools') { tQueue([T.help].concat(TOOLNAMES.map(x => '  ' + x + '()')).concat([T.tip]), 'ok'); return; }
+  if (c === 'whoami' || c === 'about') { tQueue(T.who); return; }
+  if (c.startsWith('sudo')) { if (/contrat|hire|assum|ingagg/.test(c)) { tQueue([T.granted, { a: [T.open, 'https://www.linkedin.com/in/devsgiulia/'] }], 'ok'); } else tQueue([T.denied], 'dim'); return; }
+  const key = TOOLS[c] ? c : ALIAS[c];
+  if (key) { tQueue(TOOLS[key]()); return; }
+  tQueue([T.nf + c, T.nf2], 'dim');
+}
+function bootTerm() {
+  termBooted = true; el.out.innerHTML = ''; termQ = []; clearInterval(termTimer); termTimer = 0;
+  const box = $('#tchips'); box.innerHTML = ''; TOOLNAMES.forEach(x => { const b = document.createElement('button'); b.type = 'button'; b.textContent = x + '()'; b.onclick = () => { runCmd(x); el.inp.focus(); }; box.append(b); });
+  tQueue(TERM[LANG].boot, 'ok');
+}
+function openTerm() { setMode('term'); el.term.hidden = false; if (!termBooted) bootTerm(); setTimeout(() => el.inp.focus(), 30); }
+function closeTerm() { el.term.hidden = true; setMode(st.prev === 'title' ? 'title' : 'play'); if (st.mode === 'title') $('#btnTermT').focus(); }
+
+/* troca de idioma */
+function applyLang() {
+  document.documentElement.lang = HTMLLANG[LANG]; document.title = t('docTitle');
+  const md = document.querySelector('meta[name="description"]'); if (md) md.content = t('desc');
+  document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(e => { e.placeholder = t(e.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(e => { e.setAttribute('aria-label', t(e.dataset.i18nAria)); });
+  document.querySelectorAll('.langsel').forEach(s => { s.value = LANG; });
+  $('#cvSheet').innerHTML = cvBuild(CV[LANG]);
+  ROOMS.forEach((r, i) => { r.name = ROOMNAMES[LANG][i]; if (r.tag) { r.tag.querySelector('span').textContent = r.name; r.tag.setAttribute('aria-label', r.no + ' ' + r.name); } if (r.btn) { r.btn.title = r.name; r.btn.setAttribute('aria-label', r.no + ' ' + r.name); } });
+  if (st.room >= 0) renderPanel(st.room);
+  if (window.THREE && typeof sun !== 'undefined' && sun) applyTod();
+  if (termBooted) { bootTerm(); }
+  const h = $('#hint'); if (h && !h.hidden) h.textContent = t('hint');
+  if (!window.THREE) { let n = $('#noengine'); if (!n) { n = document.createElement('p'); n.id = 'noengine'; n.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:50;background:#fff;border:3px solid #1b1745;padding:10px 14px;font:500 15px DM Sans,sans-serif'; document.body.append(n); } n.textContent = t('engine'); }
+}
+function setLang(l) { if (!LANGS.includes(l) || l === LANG) return; LANG = l; try { localStorage.setItem('giulia-lang', l); } catch (e) { /* ok */ } applyLang(); }
+
+
+/* ---------- cenário principal ---------- */
+function init() {
+  const cv = $('#gl');
+  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+  renderer.setClearColor(0x000000, 0); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  scene = new THREE.Scene(); cam = new THREE.OrthographicCamera(-10, 10, 10, -10, -300, 500);
+  hemi = new THREE.HemisphereLight(0xffffff, 0xe6d8f0, .95); scene.add(hemi);
+  sun = new THREE.DirectionalLight(0xfff6e8, .95); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 140 }); sun.shadow.bias = -.0007; sun.shadow.normalBias = .04;
+  scene.add(sun, sun.target);
+  matV = new THREE.MeshLambertMaterial({ vertexColors: true }); matWin = new THREE.MeshBasicMaterial({ color: 0xbfe3ff });
+  matEmis = new THREE.MeshBasicMaterial({ vertexColors: true }); matLedA = new THREE.MeshBasicMaterial({ vertexColors: true }); matLedB = new THREE.MeshBasicMaterial({ vertexColors: true });
+  makeTermTex(); buildWorld(); buildClouds(); buildRing(); buildParticles(); gate = buildGate();
+  ROOMS.forEach((r, i) => {
+    if (r.key === 'gate') { r.g = gate; r.base = 0; r.center = new THREE.Vector3(5.0, 2.6, 5.2); r.spot = new THREE.Vector3(4.4, 0, 6.6); const hit = new THREE.Mesh(new THREE.BoxGeometry(4.6, 6.4, 2.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); hit.position.set(2, 3.2, .4); hit.userData.room = i; gate.add(hit); r.hit = hit; return; }
+    const { g, a } = makeRoom(r.key); r.g = g; r.a = a; r.base = 0; g.position.set(r.pos[0] - 4.5, 0, r.pos[1] - 4.5); scene.add(g);
+    r.center = new THREE.Vector3(r.pos[0], 2.2, r.pos[1]); r.spot = new THREE.Vector3(r.pos[0] + .2, FY, r.pos[1] + .6);
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(9, 6, 9), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); hit.position.set(4.5, 3, 4.5); hit.userData.room = i; g.add(hit); r.hit = hit;
+    if (a.bot) { const bv = new Vox(); bv.box(-.3, .3, -.3, .6, .5, .6, '#b9a2ff'); bv.box(-.25, .8, -.25, .5, .4, .5, '#e6dcff'); bv.box(-.18, .9, .2, .12, .12, .05, '#22c3b0', 0); bv.box(.06, .9, .2, .12, .12, .05, '#22c3b0', 0); bv.box(-.05, 1.2, -.05, .1, .25, .1, '#ffc857', 0); r.bot = bv.mesh(matV); r.bot.position.set(5.4, FY, 7.0); g.add(r.bot); }
+    if (a.scrolls) { r.scr = []; for (let k = 0; k < 3; k++) { const sv = new Vox(); sv.box(-.3, 0, -.05, .6, .8, .1, '#f6f2ff'); sv.box(-.34, -.04, -.08, .68, .1, .16, '#c98a4b', 0); sv.box(-.34, .74, -.08, .68, .1, .16, '#c98a4b', 0); sv.box(-.2, .3, .04, .4, .04, .02, '#7a63d9', 0); sv.box(-.2, .45, .04, .3, .04, .02, '#7a63d9', 0); const m = sv.mesh(matV); m.position.set(3.0 + k * 1.6, FY + 3.2, 6.2); g.add(m); r.scr.push(m); } }
+  });
+  giulia = buildGiulia(); scene.add(giulia);
+  const sp = ROOMS[0].spot; giulia.position.copy(sp.clone().add(new THREE.Vector3(0, 0, 0))); giulia.rotation.y = Math.PI / 4; giulia.userData.home = giulia.position.clone();
+  // tags e barra
+  const tags = $('#tags'), bar = $('#bar');
+  ROOMS.forEach((r, i) => {
+    const t = document.createElement('button'); t.type = 'button'; t.className = 'tag'; t.innerHTML = '<b>' + r.no + '</b><span>' + r.name + '</span>'; t.setAttribute('aria-label', r.no + ' ' + r.name); t.onclick = () => selectRoom(i); t.hidden = true; tags.append(t); r.tag = t;
+    const b = document.createElement('button'); b.type = 'button'; b.innerHTML = '<sup>' + r.no + '</sup>' + iconSVG(r.icon); b.title = r.name; b.setAttribute('aria-label', r.no + ' ' + r.name); b.onclick = () => selectRoom(i); bar.append(b); r.btn = b;
+  });
+  applyTod(); makeStars(); resize();
+  const mm = e => { if (st.mode !== 'play') return; hoverAt(e.clientX, e.clientY); };
+  cv.addEventListener('pointermove', mm); cv.addEventListener('pointerleave', () => setHover(-1));
+  cv.addEventListener('click', e => { if (st.mode !== 'play') return; const i = pick(e.clientX, e.clientY); if (i >= 0) selectRoom(i); else if (st.room >= 0) closePanel(); });
+}
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function pick(x, y) {
+  ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, cam);
+  const hits = ray.intersectObjects(ROOMS.map(r => r.hit), false); return hits.length ? hits[0].object.userData.room : -1;
+}
+function setHover(i) { if (i === st.hover) return; st.hover = i; $('#gl').style.cursor = i >= 0 ? 'pointer' : 'default'; ROOMS.forEach((r, k) => r.tag.classList.toggle('on', k === i || k === st.room)); }
+function hoverAt(x, y) { setHover(pick(x, y)); }
+
+function resize() {
+  const w = innerWidth, h = innerHeight; renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(w, h, false);
+  makeStars(); updateFocusGoal();
+}
+function baseHalfH() { const asp = innerWidth / innerHeight; return Math.max(23, 29 / asp); }
+function updateFocusGoal() {
+  const w = innerWidth, h = innerHeight, asp = w / h, mobile = w <= 760, bh = baseHalfH();
+  if (st.room < 0) { Object.assign(goal, { tx: 0, ty: 0, tz: 0, zoom: 1, sx: 0, sy: 0 }); return; }
+  const r = ROOMS[st.room], pw = mobile ? 0 : Math.min(430, w - 36) + 36, ph = mobile ? Math.min(h * .46, 420) + 86 : 0;
+  const effAsp = (w - pw) / (h - ph), need = Math.max(r.key === 'gate' ? 6 : 8.2, 10 / effAsp);
+  goal.tx = r.center.x; goal.ty = r.center.y; goal.tz = r.center.z; goal.zoom = clamp(bh / need, 1.4, 9);
+  goal.sx = pw / 2; goal.sy = ph / 2 - (mobile ? 0 : 0);
+}
+function applyCam() {
+  const w = innerWidth, h = innerHeight, asp = w / h, bh = baseHalfH(), el = Math.atan(1 / Math.SQRT2);
+  cam.left = -bh * asp; cam.right = bh * asp; cam.top = bh; cam.bottom = -bh; cam.zoom = view.zoom; cam.updateProjectionMatrix();
+  const R = 160, az = view.az;
+  cam.position.set(view.tx + R * Math.cos(el) * Math.sin(az), view.ty + R * Math.sin(el), view.tz + R * Math.cos(el) * Math.cos(az)); cam.lookAt(view.tx, view.ty, view.tz);
+  if (Math.abs(view.sx) > .5 || Math.abs(view.sy) > .5) cam.setViewOffset(w, h, view.sx, view.sy, w, h); else cam.clearViewOffset();
+}
+
+/* seleção */
+const hop = { on: false, t: 0, from: new THREE.Vector3(), to: new THREE.Vector3(), dur: .9 };
+function selectRoom(i) {
+  if (st.mode !== 'play') return;
+  const r = ROOMS[i]; if (!r) return;
+  st.room = i; updateFocusGoal(); renderPanel(i);
+  ROOMS.forEach((q, k) => { q.btn.classList.toggle('on', k === i); q.tag.classList.toggle('on', k === i); });
+  $('#hint').hidden = true;
+  const to = r.spot.clone();
+  if (reduced) { giulia.position.copy(to); } else { hop.on = true; hop.t = 0; hop.from.copy(giulia.position); hop.to.copy(to); hop.dur = clamp(.7 + hop.from.distanceTo(to) / 40, .8, 1.4); }
+  if (!st.visited.has(i)) { st.visited.add(i); r.btn.classList.add('seen'); r.tag.classList.add('seen'); RING[i].chip.visible = true; $('#progN').textContent = st.visited.size; $('#meter').style.width = (st.visited.size / 9 * 100) + '%'; if (st.visited.size === 9) setTimeout(() => toast(t('done')), 1400); }
+  r.pop = 1;
+}
+function renderPanel(i) {
+  const r = ROOMS[i], p = $('#panel');
+  p.hidden = false; p.style.setProperty('--rc', r.col);
+  p.innerHTML = '<div class="ph"><span class="no">' + r.no + '</span><h2>' + r.name + '</h2><button type="button" id="pClose" aria-label="' + t('closePanel') + '">x</button></div><div class="pb">' + PANELS[LANG][r.key]() + '</div><div class="pf"><button class="btn small" id="pPrev" type="button">' + t('prev') + '</button><button class="btn small primary" id="pNext" type="button">' + t('next') + '</button></div>';
+  $('#pClose').onclick = closePanel; $('#pPrev').onclick = () => selectRoom((i + 8) % 9); $('#pNext').onclick = () => selectRoom((i + 1) % 9);
+  p.querySelectorAll('[data-go]').forEach(b => b.onclick = () => selectRoom(+b.dataset.go - 1));
+  p.querySelectorAll('[data-act="cv"]').forEach(b => b.onclick = openResume);
+  p.querySelectorAll('[data-act="term"]').forEach(b => b.onclick = openTerm);
+  $('#sr').textContent = r.name; p.querySelector('.pb').scrollTop = 0;
+}
+function closePanel() {
+  st.room = -1; $('#panel').hidden = true; updateFocusGoal(); ROOMS.forEach(q => { q.btn.classList.remove('on'); q.tag.classList.remove('on'); });
+  if (!reduced) { hop.on = true; hop.t = 0; hop.from.copy(giulia.position); hop.to.copy(giulia.position); hop.dur = .01; }
+}
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); }
+
+/* ---------- laço ---------- */
+const V3 = THREE.Vector3, tmpV = new V3(), tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpS = new V3(), tmpC2 = new THREE.Color();
+let last = performance.now(), lastTod = 0;
+function frame(now) {
+  const dt = clamp((now - last) / 1000, 0, .05); last = now; st.t += dt; const t = st.t;
+  // câmera
+  const k = 1 - Math.exp(-dt * (reduced ? 40 : 4.5));
+  for (const p of ['tx', 'ty', 'tz', 'zoom', 'sx', 'sy']) view[p] += (goal[p] - view[p]) * k;
+  const sway = st.mode === 'title' && !reduced ? Math.sin(t * .18) * .16 : 0;
+  view.az += ((Math.PI / 4 + sway) - view.az) * k; applyCam();
+  // salas
+  ROOMS.forEach((r, i) => {
+    const want = (i === st.hover || i === st.room) ? .35 : 0; r.lift = (r.lift || 0) + (want - (r.lift || 0)) * Math.min(1, dt * 10);
+    if (r.pop) r.pop = Math.max(0, r.pop - dt * 2.2); const pop = r.pop ? Math.sin(r.pop * Math.PI) * .25 : 0;
+    r.g.position.y = r.lift + pop;
+    if (r.bot) { r.bot.position.x = 5.4 + Math.sin(t * .8) * 1.4; r.bot.position.y = FY + Math.abs(Math.sin(t * 4)) * .08; r.bot.rotation.y = Math.cos(t * .8) > 0 ? Math.PI / 2 : -Math.PI / 2; }
+    if (r.scr) r.scr.forEach((m, n) => { m.position.y = FY + 3.2 + (reduced ? 0 : Math.sin(t * 1.6 + n * 1.7) * .18); m.rotation.y = reduced ? 0 : Math.sin(t + n) * .25; });
+  });
+  gate.userData.sm.position.y = reduced ? 0 : Math.sin(t * 2) * .06; gate.userData.sm.visible = reduced ? true : (Math.floor(t * 3) % 6 !== 5);
+  drawTerm(reduced ? 0 : t);
+  const ledOn = Math.floor(t * 2) % 2; matLedA.color.setScalar(ledOn ? 1 : .35); matLedB.color.setScalar(ledOn ? .35 : 1);
+  // nuvens e anel
+  CLOUDS.forEach(c => { if (!reduced) { c.position.x += c.userData.sp * dt; if (c.position.x > 85) c.position.x = -85; } });
+  RING.forEach((q, i) => { q.g.position.y = q.base + (reduced ? 0 : Math.sin(t * .8 + q.ph) * .35); if (q.chip.visible) { q.chip.rotation.y = t * 1.5; q.chip.position.y = 1.6 + (reduced ? 0 : Math.sin(t * 2 + i) * .15); } });
+  // partículas
+  const night = todNow ? todNow.win : 0, tp = tmpS;
+  LV.forEach((p, i) => { const fall = (t * p.sp * .6 + p.ph) % 7; const y = 7.5 - fall, ox = ROOMS[0] && 0; tmpV.set(p.x + Math.sin(t + p.ph) * .6, y, p.z + Math.cos(t * .8 + p.ph) * .6); tp.setScalar((reduced || night > .7) ? 0.001 : 1); tmpQ.setFromEuler(new THREE.Euler(t + p.ph, t * .7, 0)); tmpM.compose(tmpV, tmpQ, tp); leaves.setMatrixAt(i, tmpM); });
+  leaves.instanceMatrix.needsUpdate = true;
+  FL.forEach((p, i) => { tmpV.set(p.x + Math.sin(t * .5 + p.ph) * 1.2, p.y + Math.sin(t * 1.1 + p.ph) * .6, p.z + Math.cos(t * .4 + p.ph) * 1.2); tp.setScalar((reduced || night < .5) ? 0.001 : (.6 + .4 * Math.sin(t * 3 + p.ph))); tmpQ.identity(); tmpM.compose(tmpV, tmpQ, tp); flies.setMatrixAt(i, tmpM); });
+  flies.instanceMatrix.needsUpdate = true;
+  // personagem
+  const G = giulia, P = G.userData.P;
+  if (hop.on) {
+    hop.t += dt / hop.dur; const u = clamp(hop.t, 0, 1), e = u * u * (3 - 2 * u);
+    G.position.lerpVectors(hop.from, hop.to, e); G.position.y = lerp(hop.from.y, hop.to.y, e) + Math.sin(u * Math.PI) * 4.2;
+    const dx = hop.to.x - hop.from.x, dz = hop.to.z - hop.from.z; if (dx * dx + dz * dz > .5) G.rotation.y = Math.atan2(dx, dz);
+    P.l.rotation.x = -.8 * Math.sin(u * Math.PI); P.r.rotation.x = .8 * Math.sin(u * Math.PI); P.al.rotation.z = -1.1 * Math.sin(u * Math.PI); P.ar.rotation.z = 1.1 * Math.sin(u * Math.PI);
+    if (u >= 1) { hop.on = false; G.position.copy(hop.to); }
+  } else {
+    let da = Math.PI / 4 - G.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); G.rotation.y += da * Math.min(1, dt * 8);
+    const b = reduced ? 0 : Math.sin(t * 2.2) * .04; G.position.y += (hop.to.y + b - G.position.y) * .5;
+    P.l.rotation.x = P.r.rotation.x = 0; P.al.rotation.z = -.08 + (reduced ? 0 : Math.sin(t * 2.2) * .03); P.ar.rotation.z = .08 - (reduced ? 0 : Math.sin(t * 2.2) * .03);
+  }
+  // tags
+  if (st.mode === 'play') ROOMS.forEach(r => { tmpV.set(r.center.x + (r.key === 'gate' ? 0 : 0), r.key === 'gate' ? 7.4 : 7.0, r.center.z); tmpV.y += r.lift || 0; tmpV.project(cam); const x = (tmpV.x * .5 + .5) * innerWidth, y = (-tmpV.y * .5 + .5) * innerHeight; r.tag.style.left = x + 'px'; r.tag.style.top = y + 'px'; r.tag.hidden = false; });
+  if (now - lastTod > 30000) { lastTod = now; if (st.tod === 'auto') applyTod(); }
+  renderer.render(scene, cam); requestAnimationFrame(frame);
+}
+
+/* modo currículo */
+function openResume() { setMode('resume'); el.resume.hidden = false; el.resume.scrollTop = 0; $('#cvClose').focus(); }
+function closeResume() { el.resume.hidden = true; setMode(st.prev === 'title' ? 'title' : 'play'); if (st.mode === 'title') $('#btnCvT').focus(); else if (document.activeElement) document.activeElement.blur(); }
+
+
+
+/* ---------- modos e botões ---------- */
+const el = { term: $('#term'), out: $('#termOut'), inp: $('#termIn'), resume: $('#resume') };
+function setMode(m) { if (st.mode !== 'term' && st.mode !== 'resume') st.prev = st.mode; st.mode = m; document.body.dataset.mode = m; }
+function startGame() {
+  $('#title').hidden = true; $('#hud').hidden = false; $('#bar').hidden = false; setMode('play');
+  const h = $('#hint'); h.hidden = false; h.textContent = t('hint'); setTimeout(() => { h.hidden = true; }, 9000);
+  ROOMS.forEach(r => { r.tag.hidden = false; });
+}
+$('#btnPlay').onclick = startGame;
+$('#btnTermT').onclick = () => openTerm(); $('#btnCvT').onclick = () => openResume();
+$('#btnTerm').onclick = () => openTerm(); $('#btnCv').onclick = () => openResume();
+$('#termClose').onclick = closeTerm; $('#cvClose').onclick = closeResume;
+$('#termForm').onsubmit = ev => { ev.preventDefault(); const v = el.inp.value; el.inp.value = ''; runCmd(v); };
+$('#optReduce').checked = reduced; $('#optReduce').onchange = ev => { reduced = ev.target.checked; };
+$('#optNight').onchange = ev => { st.tod = ev.target.checked ? 'night' : 'auto'; applyTod(); };
+$('#btnTime').onclick = () => { const order = ['auto', 'day', 'dusk', 'night']; st.tod = order[(order.indexOf(st.tod) + 1) % 4]; $('#optNight').checked = st.tod === 'night'; applyTod(); };
+addEventListener('resize', () => { if (renderer) resize(); });
+addEventListener('keydown', ev => {
+  if (ev.key === 'Escape') { if (st.mode === 'term') closeTerm(); else if (st.mode === 'resume') closeResume(); else if (st.mode === 'play' && st.room >= 0) closePanel(); return; }
+  if (st.mode !== 'play' || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  const tgt = ev.target; if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA')) return;
+  if (/^[1-9]$/.test(ev.key)) { selectRoom(+ev.key - 1); return; }
+  if (ev.key === 'ArrowRight') { selectRoom(st.room < 0 ? 0 : (st.room + 1) % 9); ev.preventDefault(); }
+  else if (ev.key === 'ArrowLeft') { selectRoom(st.room < 0 ? 8 : (st.room + 8) % 9); ev.preventDefault(); }
+});
+if (window.THREE) { try { init(); requestAnimationFrame(frame); } catch (e) { console.error(e); } }
+document.querySelectorAll('.langsel').forEach(sel => { sel.addEventListener('change', ev => setLang(ev.target.value)); });
+applyLang();
+})();
+</script>
+</body>
+</html>
